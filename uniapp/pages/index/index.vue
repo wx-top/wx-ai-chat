@@ -46,6 +46,7 @@ import { useChatStore } from '@/store/chat.js'
 import { useUserStore } from '@/store/user.js'
 import { useModelStore } from '@/store/model.js'
 import { storeToRefs } from 'pinia'
+import { onShow } from "@dcloudio/uni-app"
 
 const chatStore = useChatStore()
 const modelStore = useModelStore()
@@ -136,30 +137,35 @@ watch(() => currentMessages.value.length, async () => {
 
 // 页面加载时获取聊天列表和模型列表
 onMounted(async () => {
-    // 获取模型列表
-    await modelStore.fetchModels()
-    // 获取聊天列表
-    await chatStore.fetchChats()
-    
-    // 如果没有选择的模型，则选择第一个模型
-    if (!modelStore.selectedModel && modelStore.models.length > 0) {
-      modelStore.selectModel(modelStore.models[0])
-    }
-    
-    // 如果有当前聊天ID，直接加载该聊天的消息
-    if (currentChatId.value) {
-      await chatStore.fetchMessages(currentChatId.value)
-    } else if (chats.value?.length > 0) {
-      // 如果没有当前聊天ID但有聊天记录，加载第一个聊天的消息
-      await chatStore.fetchMessages(chats.value[0].id)
-    } else if (modelStore.selectedModel) {
-      // 如果没有聊天记录但有选择的模型，创建新聊天
-      const chat = await chatStore.newChat('新对话')
-      await chatStore.fetchMessages(chat.id)
-    } else {
-      // 如果没有模型，跳转到模型选择页
-      goToModelSelect()
-    }
+
+
+})
+
+onShow(async() => {
+	console.log("index page on show")
+	// 获取模型列表
+	await modelStore.fetchModels()
+	// 获取聊天列表
+	await chatStore.fetchChats()
+	// 如果没有选择的模型，则选择第一个模型
+	if (!modelStore.selectedModel && modelStore.models.length > 0) {
+	  modelStore.selectModel(modelStore.models[0])
+	}
+	
+	// 如果有当前聊天ID，直接加载该聊天的消息
+	if (currentChatId.value) {
+	  await chatStore.fetchMessages(currentChatId.value)
+	} else if (chats.value?.length > 0) {
+	  // 如果没有当前聊天ID但有聊天记录，加载第一个聊天的消息
+	  await chatStore.fetchMessages(chats.value[0].id)
+	} else if (modelStore.selectedModel) {
+	  // 如果没有聊天记录但有选择的模型，创建新聊天
+	  const chat = await chatStore.newChat('新对话')
+	  await chatStore.fetchMessages(chat.id)
+	} else {
+	  // 如果没有模型，跳转到模型选择页
+	  goToModelSelect()
+	}
 })
 
 </script>

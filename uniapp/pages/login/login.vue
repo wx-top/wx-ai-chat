@@ -17,7 +17,7 @@
 					<text class="subtitle">AI智能助手，让沟通更简单</text>
 				</view>
 
-				<button class="login-btn" @click="checkPrivacy">
+				<button class="login-btn" @click="handleLogin">
 					<text>一键登录</text>
 				</button>
 
@@ -31,7 +31,7 @@
 		</view>
 		
 		<!-- 隐私协议弹窗 -->
-		<privacy-popup ref="privacyPopup" @agree="handleLogin" @reject="handleReject" />
+		<!-- <privacy-popup ref="privacyPopup" @agree="handleLogin" @reject="handleReject" /> -->
 	</view>
 </template>
 
@@ -39,6 +39,7 @@
 import {
 	useUserStore
 } from '@/store/user.js'
+import {ref} from 'vue'
 import { login } from '@/api'
 import PrivacyPopup from '@/components/privacy-popup/privacy-popup.vue'
 
@@ -47,22 +48,7 @@ const privacyPopup = ref(null)
 
 // 检查隐私协议
 const checkPrivacy = () => {
-	// #ifdef MP-WEIXIN
-	// 检查是否已同意隐私协议
-	const privacySetting = uni.getPrivacySetting()
-	if (privacySetting.needAuthorization) {
-		privacyPopup.value.showPrivacy = true
-		privacyPopup.value.$refs.popup.open('bottom')
-	} else {
-		// 已同意隐私协议，直接登录
-		handleLogin()
-	}
-	// #endif
-	
-	// #ifndef MP-WEIXIN
-	// 非微信小程序环境直接登录
 	handleLogin()
-	// #endif
 }
 
 // 处理拒绝隐私协议

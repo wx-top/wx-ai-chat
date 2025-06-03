@@ -2,13 +2,13 @@
   <view class="history-container">
     <!-- 会话列表 -->
     <scroll-view class="chat-list" scroll-y="true">
-      <view v-if="chatStore.loading" class="loading">
+      <view v-if="loading" class="loading">
         <text>加载中...</text>
       </view>
-      <view v-else-if="chatStore.chats.length === 0" class="empty">
+      <view v-else-if="chats.length === 0" class="empty">
         <text>暂无历史会话</text>
       </view>
-      <view v-else class="chat-item" v-for="chat in chatStore.chats" :key="chat.id">
+      <view v-else class="chat-item" v-for="chat in chats" :key="chat.id">
         <view class="chat-info" @click="goToChat(chat.id)">
           <view class="chat-title">{{ chat.title }}</view>
           <view class="chat-meta">
@@ -27,8 +27,10 @@
 import { onMounted } from 'vue'
 import { useChatStore } from '@/store/chat'
 import { storeToRefs } from 'pinia'
+ 
 
 const chatStore = useChatStore()
+const { chats, loading, currentChatId, removeChat, fetchChats } = storeToRefs(chatStore)
 
 // 格式化时间
 const formatTime = (timestamp) => {
@@ -46,7 +48,8 @@ const formatTime = (timestamp) => {
 
 // 跳转到聊天页面
 const goToChat = (chatId) => {
-  chatStore.currentChatId = chatId
+  currentChatId.value = chatId
+  console.log('跳转聊天页面', chatId)
   uni.switchTab({
     url: '/pages/index/index'
   })
@@ -63,7 +66,7 @@ const deleteChat = async (chatId) => {
     })
     
     if (res.confirm) {
-      await chatStore.removeChat(chatId)
+      await removeChat(chatId)
       uni.showToast({
         title: '删除成功',
         icon: 'success'
@@ -81,7 +84,7 @@ const deleteChat = async (chatId) => {
 // 页面加载时获取聊天列表
 onMounted(async () => {
   try {
-    await chatStore.fetchChats()
+    await fetchChats()
   } catch (error) {
     uni.showToast({
       title: '加载失败',
