@@ -1,0 +1,23 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      uview-ui:
+        specifier: 2.0.38
+        version: 2.0.38
+
+packages:
+
+  uview-ui@2.0.38:
+    resolution: {integrity: sha512-6egHDf9lXHKpG3hEjRE0vMx4+VWwKk/ReTf5x18KrIKqdvdPRqO3+B8Unh7vYYwrIxzAWIlmhZ9RJpKI/4UqPQ==}
+    engines: {HBuilderX: ^3.1.0}
+
+snapshots:
+
+  uview-ui@2.0.38: {}

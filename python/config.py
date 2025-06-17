@@ -10,7 +10,12 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     # OpenAI配置
     OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-    OPENAI_API_URL = os.getenv('OPENAI_API_URL')
+    OPENAI_API_URL = os.getenv('OPENAI_API_URL', 'https://api.deepseek.com')
+    MODEL_PROVIDER = os.getenv('MODEL_PROVIDER', 'openai')
+    # LangSmith配置
+    LANGSMITH_API_KEY = os.getenv('LANGSMITH_API_KEY', '')
+    LANGSMITH_TRACING = os.getenv('LANGSMITH_TRACING', 'true')
+    # Wechat配置
     WECHAT_APPID = os.getenv('WECHAT_APPID')
     WECHAT_SECRET = os.getenv('WECHAT_SECRET')
     # JWT配置

@@ -2,7 +2,7 @@
 	"pages": [{
 			"path": "pages/index/index",
 			"style": {
-				"navigationBarTitleText": "AI聊天助手"
+				"navigationBarTitleText": "聊天"
 			}
 		},
 		{
@@ -28,6 +28,20 @@
 			"style": {
 				"navigationBarTitleText": ""
 			}
+		},
+		{
+			"path" : "pages/repository/repository",
+			"style" : 
+			{
+				"navigationBarTitleText" : "知识库"
+			}
+		},
+		{
+			"path" : "pages/repository/detail",
+			"style" : 
+			{
+				"navigationBarTitleText" : "知识库详情"
+			}
 		}
 	],
 	"globalStyle": {
@@ -52,6 +66,12 @@
 				"iconPath": "/static/history.png",
 				"selectedIconPath": "/static/history_activity.png",
 				"text": "会话"
+			},
+			{
+				"pagePath": "pages/repository/repository",
+				"iconPath": "/static/repository.png",
+				"selectedIconPath": "/static/repository_activity.png",
+				"text": "知识库"
 			},
 			{
 				"pagePath": "pages/mine/mine",

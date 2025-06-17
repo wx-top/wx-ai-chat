@@ -77,7 +77,7 @@ const responseInterceptor = async (response) => {
 				const userStore = useUserStore()
 				userStore.clearUserInfo()
 				// 跳转到登录页
-				uni.switchTab({
+				uni.navigateTo({
 					url: '/pages/login/login'
 				})
 				return Promise.reject(new Error('登录已过期，请重新登录'))
@@ -137,7 +137,6 @@ const request = (options) => {
 					console.log('响应拦截后的数据:', data)
 					resolve(data)
 				} catch (error) {
-					console.error('响应拦截失败:', error)
 					reject(error)
 				}
 			},
@@ -164,7 +163,7 @@ const request = (options) => {
 }
 
 // 常用请求方法
-const http = {
+export const http = {
 	get(url, data = {}, options = {}) {
 		return request({
 			url,
@@ -203,14 +202,15 @@ const http = {
 
 	upload(url, filePath, options = {}) {
 		return new Promise((resolve, reject) => {
+			const userStore = useUserStore()
+			const access_token = userStore.getAccessToken
+	
 			uni.uploadFile({
 				url: config.baseURL + url,
 				filePath,
 				name: 'file',
-				formData: {},
 				header: {
-					...options.header,
-					'Content-Type': 'application/octet-stream'
+					'Authorization': `Bearer ${access_token}`
 				},
 				success: (res) => {
 					try {
@@ -232,4 +232,3 @@ const http = {
 	}
 }
 
-export default http

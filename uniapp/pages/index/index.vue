@@ -6,10 +6,39 @@
         <text>{{ selectedModel?.description || '选择模型' }}</text>
         <text class="icon">▼</text>
       </view>
-      <view class="new-chat-btn" @click="createNewChat">
-        <text>新对话</text>
+      <view class="header-buttons">
+        <view class="repository-container">
+          <view class="repository-btn" @click="showRepositorySelector">
+            <uni-icons type="folder-add" size="24" color="#007AFF"></uni-icons>
+            <text v-if="currentRepository" class="repository-name">{{ currentRepository.name }}</text>
+          </view>
+          <view v-if="currentRepository" class="repository-cancel" @click="cancelRepositorySelect">
+            <uni-icons type="closeempty" size="16" color="#999"></uni-icons>
+          </view>
+        </view>
+        <view class="new-chat-btn" @click="createNewChat">
+          <text>新对话</text>
+        </view>
       </view>
     </view>
+    
+    <!-- 知识库选择弹窗 -->
+    <uni-popup ref="repositoryPopup" type="bottom">
+      <view class="repository-popup">
+        <view class="popup-header">
+          <text class="popup-title">选择知识库</text>
+          <text class="close-btn" @click="closeRepositorySelector">×</text>
+        </view>
+        <scroll-view class="repository-list" scroll-y>
+          <view v-for="repo in repositories" :key="repo.id" 
+                class="repository-item" 
+                :class="{ 'repository-item-selected': currentRepository && currentRepository.id === repo.id }"
+                @click="selectRepository(repo)">
+            <text class="repository-name">{{ repo.name }}</text>
+          </view>
+        </scroll-view>
+      </view>
+    </uni-popup>
     
     <!-- 聊天记录 -->
     <scroll-view class="chat-messages" scroll-y="true" :scroll-top="scrollTop" scroll-with-animation>
@@ -43,19 +72,52 @@
 <script setup>
 import { ref, computed, nextTick, watch, onMounted, toRef } from 'vue'
 import { useChatStore } from '@/store/chat.js'
-import { useUserStore } from '@/store/user.js'
 import { useModelStore } from '@/store/model.js'
 import { storeToRefs } from 'pinia'
 import { onShow } from "@dcloudio/uni-app"
+import { getRepositories } from '@/api/repository'
 
 const chatStore = useChatStore()
 const modelStore = useModelStore()
 const inputMessage = ref('')
 const scrollTop = ref(0)
+const repositoryPopup = ref(null)
+const repositories = ref([])
 
 // 当前选择的模型
 const { selectedModel } = storeToRefs(modelStore)
-const { chats, loading, currentMessages, currentChatId } = storeToRefs(chatStore)
+const { chats, loading, currentMessages, currentChatId, currentRepository } = storeToRefs(chatStore)
+
+// 显示知识库选择器
+const showRepositorySelector = async () => {
+  try {
+    // 获取知识库列表
+    repositories.value = await getRepositories()
+    repositoryPopup.value.open()
+  } catch (error) {
+    uni.showToast({
+      title: '获取知识库列表失败',
+      icon: 'none'
+    })
+  }
+}
+
+// 关闭知识库选择器
+const closeRepositorySelector = () => {
+  repositoryPopup.value.close()
+}
+
+// 选择知识库
+const selectRepository = (repo) => {
+  // 如果点击的是当前已选中的知识库，则取消选择
+  if (currentRepository.value && currentRepository.value.id === repo.id) {
+    chatStore.setCurrentRepository(null)
+  } else {
+    // 否则更新当前知识库信息
+    chatStore.setCurrentRepository(repo)
+  }
+  closeRepositorySelector()
+}
 
 // 创建新对话
 const createNewChat = async () => {
@@ -167,6 +229,11 @@ onShow(async() => {
 	  goToModelSelect()
 	}
 })
+
+// 取消选择知识库
+const cancelRepositorySelect = () => {
+  chatStore.setCurrentRepository(null)
+}
 
 </script>
 
@@ -297,4 +364,89 @@ onShow(async() => {
 .chat-title {
   display: none;
 }
+
+.header-buttons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.repository-container {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.repository-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  background-color: #f0f0f0;
+  border-radius: 15px;
+  font-size: 14px;
+}
+
+.repository-name {
+  color: #007AFF;
+  font-size: 14px;
+}
+
+.repository-cancel {
+  padding: 4px;
+  cursor: pointer;
+}
+
+.repository-popup {
+  background-color: white;
+  border-radius: 20px 20px 0 0;
+  padding: 20px;
+  max-height: 60vh;
+}
+
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.popup-title {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.close-btn {
+  font-size: 24px;
+  color: #999;
+  padding: 0 10px;
+}
+
+.repository-list {
+  max-height: calc(60vh - 60px);
+}
+
+.repository-item {
+  padding: 15px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.repository-remark {
+  font-size: 12px;
+  color: #999;
+}
+
+.repository-item-selected {
+  background-color: #e6f7ff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.1);
+}
+
+
+.repository-tag {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 </style> 

@@ -39,25 +39,8 @@
 import {
 	useUserStore
 } from '@/store/user.js'
-import {ref} from 'vue'
 import { login } from '@/api'
-import PrivacyPopup from '@/components/privacy-popup/privacy-popup.vue'
-
 const userStore = useUserStore()
-const privacyPopup = ref(null)
-
-// 检查隐私协议
-const checkPrivacy = () => {
-	handleLogin()
-}
-
-// 处理拒绝隐私协议
-const handleReject = () => {
-	uni.showToast({
-		title: '需要同意隐私协议才能继续使用',
-		icon: 'none'
-	})
-}
 
 // 处理获取用户信息
 const handleLogin = async () => {
@@ -69,6 +52,8 @@ const handleLogin = async () => {
 
 		// 调用登录接口
 		const result = await login(loginRes.code)
+
+		console.log(result)
 
 		// 更新用户状态
 		userStore.setAccessToken(result.access_token)

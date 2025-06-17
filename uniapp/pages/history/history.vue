@@ -30,7 +30,8 @@ import { storeToRefs } from 'pinia'
  
 
 const chatStore = useChatStore()
-const { chats, loading, currentChatId, removeChat, fetchChats } = storeToRefs(chatStore)
+const { chats, loading, currentChatId } = storeToRefs(chatStore)
+const { removeChat, fetchChats } = chatStore
 
 // 格式化时间
 const formatTime = (timestamp) => {

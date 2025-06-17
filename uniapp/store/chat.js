@@ -10,6 +10,8 @@ export const useChatStore = defineStore('chat', () => {
   const currentChatId = ref(null)
   // 当前聊天消息
   const currentMessages = ref([])
+  // 当前知识库信息
+  const currentRepository = ref(null)
   // 加载状态
   const loading = ref(false)
   // 流式响应状态
@@ -20,14 +22,11 @@ export const useChatStore = defineStore('chat', () => {
   // 获取聊天列表
   const fetchChats = async () => {
     try {
-      loading.value = true
       const data = await getChats()
       chats.value = data
     } catch (error) {
       console.error('获取聊天列表失败', error)
       throw error
-    } finally {
-      loading.value = false
     }
   }
 
@@ -54,7 +53,7 @@ export const useChatStore = defineStore('chat', () => {
       const data = await getMessages(chatId)
       currentMessages.value = data
     } catch (error) {
-      console.error('获取聊天消息失败', error)
+      console.error('获取聊天消息失败：', error)
       throw error
     } finally {
       loading.value = false
@@ -100,7 +99,8 @@ export const useChatStore = defineStore('chat', () => {
           aiMessage.content += chunk
           // 强制更新视图
           currentMessages.value = [...currentMessages.value]
-        }
+        },
+        currentRepository.value?.id
       )
       
       // 更新 AI 消息的完整内容
@@ -112,8 +112,8 @@ export const useChatStore = defineStore('chat', () => {
       currentMessages.value.pop()
       throw error
     } finally {
-      streaming.value = false
       loading.value = false
+      streaming.value = false
     }
   }
 
@@ -121,6 +121,7 @@ export const useChatStore = defineStore('chat', () => {
   const clearCurrentChat = () => {
     currentChatId.value = null
     currentMessages.value = []
+    currentRepository.value = null
   }
 
   // 删除聊天
@@ -129,10 +130,7 @@ export const useChatStore = defineStore('chat', () => {
       loading.value = true
       await deleteChat(chatId)
       // 从列表中移除
-      const index = chats.value.findIndex(chat => chat.id === chatId)
-      if (index !== -1) {
-        chats.value.splice(index, 1)
-      }
+      chats.value = chats.value.filter(chat => chat.id !== chatId)
       // 如果删除的是当前聊天，清空当前聊天
       if (currentChatId.value === chatId) {
         clearCurrentChat()
@@ -153,10 +151,16 @@ export const useChatStore = defineStore('chat', () => {
     currentMessages.value.push(message)
   }
 
+  // 设置当前知识库
+  const setCurrentRepository = (repository) => {
+    currentRepository.value = repository
+  }
+
   return {
     chats,
     currentChatId,
     currentMessages,
+    currentRepository,
     loading,
     streaming,
     fetchChats,
@@ -165,6 +169,7 @@ export const useChatStore = defineStore('chat', () => {
     sendChatMessage,
     clearCurrentChat,
     removeChat,
-    addMessage
+    addMessage,
+    setCurrentRepository
   }
 })

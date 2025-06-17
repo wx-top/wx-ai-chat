@@ -49,6 +49,9 @@ def create_app(config_class=Config):
     from app.user import bp as user_bp
     app.register_blueprint(user_bp, url_prefix='/api/user')
     
+    from app.repository import bp as repository_bp
+    app.register_blueprint(repository_bp, url_prefix='/api/repository')
+    
     # 在应用上下文中导入 User 模型
     with app.app_context():
         from app.models import User

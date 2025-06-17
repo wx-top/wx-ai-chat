@@ -30,4 +30,23 @@ class Model(db.Model):
     name = db.Column(db.String(50), unique=True, nullable=False)
     description = db.Column(db.String(200))
     is_active = db.Column(db.Integer, default=1)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Repository(db.Model):
+    __tablename__ = 'repository'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    remark = db.Column(db.String(255))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    files = db.relationship('RepositoryFile', backref='repository', lazy=True)
+
+class RepositoryFile(db.Model):
+    __tablename__ = 'repository_file'
+    id = db.Column(db.Integer, primary_key=True)
+    repository_id = db.Column(db.Integer, db.ForeignKey('repository.id'), nullable=False)
+    file = db.Column(db.String(255), nullable=False)
+    name = db.Column(db.String(255), nullable=False)
+    size = db.Column(db.Integer, nullable=False)  # 文件大小（字节）
+    type = db.Column(db.Integer, nullable=False)  # 1: 文本, 2: PDF, 3: Word, 4: 其他
+    file_id = db.Column(db.String(255), nullable=False) # 文件向量id
     created_at = db.Column(db.DateTime, default=datetime.utcnow) 

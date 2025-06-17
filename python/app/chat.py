@@ -1,8 +1,8 @@
 from flask import Blueprint, request, current_app, Response, stream_with_context
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from openai import OpenAI
 from app import db
 from app.models import Chat, Message, Model, User
+from app.services.chat_service import ChatService
 from common.result import Result
 
 bp = Blueprint('chat', __name__)
@@ -71,6 +71,8 @@ def send_message(chat_id):
         data = request.json
         content = data.get('content')
         model_id = data.get('model_id')
+        repository_id = data.get('repository_id') or None
+        print(f"{model_id}:{repository_id}")
         
         if not content:
             return Result.bad_request(message="消息内容不能为空").to_json()
@@ -94,38 +96,26 @@ def send_message(chat_id):
             db.session.commit()
         
         # 获取历史消息
-        history_messages = Message.query.filter_by(chat_id=chat_id).order_by(Message.created_at.asc()).all()
-        messages = [{'role': msg.role, 'content': msg.content} for msg in history_messages]
+        # history_messages = Message.query.filter_by(chat_id=chat_id).order_by(Message.created_at.asc()).all()
+        # messages = [{'role': msg.role, 'content': msg.content} for msg in history_messages]
         
-        # 调用DeepSeek API
-        client = OpenAI(
-            api_key=current_app.config['OPENAI_API_KEY'],
-            base_url=current_app.config['OPENAI_API_URL'],
-        )
+        # 使用 LangChain 处理聊天，传入知识库ID
+        print(f'模型名字 {model.name}' )
+        chat_service = ChatService(model.name, repository_id)
+        ai_content = chat_service.chat(chat_id, content)
+
         
-        try:
-            response = client.chat.completions.create(
-                model=model.name,
-                messages=messages
-            )
-            
-            ai_content = response.choices[0].message.content
-            
-            # 保存AI消息
-            ai_message = Message(chat_id=chat_id, role='assistant', content=ai_content)
-            db.session.add(ai_message)
-            db.session.commit()
-            
-            return Result.success(data={
-                'id': ai_message.id,
-                'role': ai_message.role,
-                'content': ai_message.content,
-                'created_at': ai_message.created_at.isoformat()
-            }).to_json()
-            
-        except Exception as e:
-            db.session.rollback()
-            return Result.error(message=str(e)).to_json()
+        # 保存AI消息
+        ai_message = Message(chat_id=chat_id, role='assistant', content=ai_content)
+        db.session.add(ai_message)
+        db.session.commit()
+        
+        return Result.success(data={
+            'id': ai_message.id,
+            'role': ai_message.role,
+            'content': ai_message.content,
+            'created_at': ai_message.created_at.isoformat()
+        }).to_json()
         
     except Exception as e:
         db.session.rollback()

@@ -1,4 +1,4 @@
-import http from '../utils/http.js'
+import {http} from '../utils/http.js'
 import { useUserStore } from '../store/user.js'
 
 // 获取聊天列表
@@ -17,14 +17,15 @@ export const getMessages = (chatId) => {
 }
 
 // 发送消息
-export const sendMessage = async (chatId, content, modelId) => {
+export const sendMessage = async (chatId, content, modelId, onChunkReceived, repositoryId) => {
   try {
     const userStore = useUserStore()
     const token = userStore.getAccessToken
 
     const response = await http.post(`/api/chat/chats/${chatId}/messages`, {
       content,
-      model_id: modelId
+      model_id: modelId,
+      repository_id: repositoryId
     }, {
       header: {
         'Authorization': `Bearer ${token}`

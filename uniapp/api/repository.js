@@ -1,0 +1,34 @@
+import {http} from '../utils/http.js'
+
+export const addRepository = async (data) => {
+    return await http.post('/api/repository/repositories', data)
+}
+
+export const getRepositories = async () => {
+    return await http.get('/api/repository/repositories')
+}
+
+// 获取知识库文件列表
+export const getRepositoryFilesById = async (id) => {
+    return await http.get(`/api/repository/repositories/${id}/files`)
+}
+
+// 上传文件到知识库
+export const uploadFile = async (repositoryId, file, name) => {
+    return await http.upload(`/api/repository/repositories/${repositoryId}/files?name=${name}`, file.path)
+}
+
+// 删除知识库文件
+export const deleteFile = async (repositoryId, fileId) => {
+    return await http.delete(`/api/repository/repositories/${repositoryId}/files/${fileId}`)
+}
+
+// 更新知识库
+export const updateRepository = async (id, data) => {
+    return await http.put(`/api/repository/repositories/${id}`, data)
+}
+
+// 删除知识库
+export const deleteRepository = async (id) => {
+    return await http.delete(`/api/repository/repositories/${id}`)
+}

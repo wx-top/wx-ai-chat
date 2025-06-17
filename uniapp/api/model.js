@@ -1,4 +1,4 @@
-import http from '../utils/http.js'
+import {http} from '../utils/http.js'
 
 // 获取模型列表
 export const getModels = async () => {
