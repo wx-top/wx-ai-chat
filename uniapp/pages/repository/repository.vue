@@ -2,8 +2,7 @@
 	<view class="container">
 		<!-- 顶部操作栏：搜索框和创建按钮 -->
 		<view class="header">
-			<uni-search-bar :focus="true" v-model="keyword">
-			</uni-search-bar>
+			<up-search placeholder="搜索知识库" v-model="keyword" :clearabled="true" :showAction="false"></up-search>
 			<button class="add-btn" type="primary" @click="addDialogToggle"><text class="button-text">添加</text></button>
 		</view>
 
@@ -17,13 +16,25 @@
 			<uni-popup-dialog mode="input" title="修改知识库" placeholder="请输入知识库名字" :value="currentRepository?.name"
 				@confirm="dialogEditConfirm"></uni-popup-dialog>
 		</uni-popup>
-
-		<uni-swipe-action>
-			<uni-swipe-action-item v-for="item in repositoryList" :right-options="options"
-				@click="onClick($event, item.id)">
-				<view style="height: 80rpx; line-height: 80rpx;">{{ item.name }}</view>
-			</uni-swipe-action-item>
-		</uni-swipe-action>
+		<up-list>
+			<up-list-item v-for="(item, index) in repositoryList" :key="index">
+				<up-cell :title="item.title">
+					<template #title>
+						<view class="list-item-title">
+							<up-text type="primary" :text="item.name"></up-text>
+							<!-- <up-text type="info" size="14" :text="formatTime(item.created_at)"></up-text> -->
+						</view>
+					</template>
+					<template #right-icon>
+						<view class="list-item-btns">
+							<up-button type="success" @click="toDetail(item.id)" size="mini" text="详情"></up-button>
+							<up-button type="primary" @click="editRep(item.id)" size="mini" text="修改"></up-button>
+							<up-button type="error" @click="deleteRep(item.id)" size="mini" text="删除"></up-button>
+						</view>
+					</template>
+				</up-cell>
+			</up-list-item>
+		</up-list>
 	</view>
 </template>
 
@@ -43,73 +54,44 @@
 	const addDialog = ref(null)
 	const editDialog = ref(null)
 	const currentRepository = ref(null)
-	const options = ref([{
-			text: '详情',
-			style: {
-				backgroundColor: '#007AFF'
-			}
-		},
-		{
-			text: '编辑',
-			style: {
-				backgroundColor: '#007AFF'
-			}
-		},
-		{
-			text: '删除',
-			style: {
-				backgroundColor: '#FF0000'
-			}
-		}
-	])
 
 	const addDialogToggle = () => {
 		addDialog.value.open()
 	}
 
+	const toDetail = (id) => {
+		uni.navigateTo({
+			url: `/pages/repository/detail?id=${id}`
+		})
+	}
 
-	const onClick = ({
-		index
-	}, id) => {
-		console.log('onClick', index)
-		if (index === 0) {
-			// 详情
-			uni.navigateTo({
-				url: `/pages/repository/detail?id=${id}`
-			})
-		} else if (index === 1) {
-			// 编辑
-			const repository = repositoryList.value.find(item => item.id === id)
-			if (repository) {
-				currentRepository.value = repository
-				editDialog.value.open()
-			}
-		} else if (index === 2) {
-			// 删除
-			uni.showModal({
-				title: '提示',
-				content: '确定要删除该知识库吗？删除后无法恢复。',
-				confirmColor: '#FF0000',
-				success: async (res) => {
-					if (res.confirm) {
-						try {
-							await deleteRepository(id)
-							uni.showToast({
-								title: '删除成功',
-								icon: 'success'
-							})
-							loadRepositoryList()
-						} catch (error) {
-							console.log("删除知识库失败", error)
-							uni.showToast({
-								title: '删除失败',
-								icon: 'error'
-							})
-						}
+	const editRep = (id) => {
+		console.log(id)
+	}
+	const deleteRep = (id) => {
+		uni.showModal({
+			title: '提示',
+			content: '确定要删除该知识库吗？删除后无法恢复。',
+			confirmColor: '#FF0000',
+			success: async (res) => {
+				if (res.confirm) {
+					try {
+						await deleteRepository(id)
+						uni.showToast({
+							title: '删除成功',
+							icon: 'success'
+						})
+						loadRepositoryList()
+					} catch (error) {
+						console.log("删除知识库失败", error)
+						uni.showToast({
+							title: '删除失败',
+							icon: 'error'
+						})
 					}
 				}
-			})
-		}
+			}
+		})
 	}
 
 	const dialogAddConfirm = async (name) => {
@@ -174,8 +156,8 @@
 <style lang="scss" scoped>
 	.container {
 		height: 100vh;
-		padding: 20rpx 30rpx;
-		background-color: #f8f9fa;
+		padding: 20rpx;
+		background-color: #f0f0f0;
 
 		.header {
 			display: flex;
@@ -216,6 +198,11 @@
 					box-shadow: 0 2rpx 8rpx rgba(76, 175, 80, 0.2);
 				}
 			}
+		}
+
+		.list-item-btns {
+			display: flex;
+			gap: 5rpx;
 		}
 	}
 </style>

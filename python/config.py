@@ -10,7 +10,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     # OpenAI配置
     OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-    OPENAI_API_URL = os.getenv('OPENAI_API_URL', 'https://api.deepseek.com')
+    OPENAI_API_URL = os.getenv('OPENAI_API_URL')
     MODEL_PROVIDER = os.getenv('MODEL_PROVIDER', 'openai')
     # LangSmith配置
     LANGSMITH_API_KEY = os.getenv('LANGSMITH_API_KEY', '')

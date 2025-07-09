@@ -20,230 +20,227 @@
 				<button class="login-btn" @click="handleLogin">
 					<text>一键登录</text>
 				</button>
-
-				<view class="agreement">
-					<text>登录即代表同意</text>
-					<text class="link">《用户协议》</text>
-					<text>和</text>
-					<text class="link">《隐私政策》</text>
-				</view>
 			</view>
 		</view>
-		
-		<!-- 隐私协议弹窗 -->
-		<!-- <privacy-popup ref="privacyPopup" @agree="handleLogin" @reject="handleReject" /> -->
+		<!-- #ifdef MP-WEIXIN -->
+		<zero-privacy :onNeed='false'></zero-privacy>
+		<!-- #endif -->
 	</view>
 </template>
 
 <script setup>
-import {
-	useUserStore
-} from '@/store/user.js'
-import { login } from '@/api'
-const userStore = useUserStore()
+	import {
+		useUserStore
+	} from '@/store/user.js'
+	import {
+		onMounted
+	} from 'vue'
+	import {
+		login
+	} from '@/api'
+	const userStore = useUserStore()
 
-// 处理获取用户信息
-const handleLogin = async () => {
-	try {
-		// 获取微信登录 code
-		const loginRes = await uni.login({
-			provider: 'weixin'
-		})
+	// 处理获取用户信息
+	const handleLogin = async () => {
+		try {
+			// 获取微信登录 code
+			const loginRes = await uni.login({
+				provider: 'weixin'
+			})
 
-		// 调用登录接口
-		const result = await login(loginRes.code)
+			// 调用登录接口
+			const result = await login(loginRes.code)
 
-		console.log(result)
+			console.log(result)
 
-		// 更新用户状态
-		userStore.setAccessToken(result.access_token)
-		userStore.setRefreshToken(result.refresh_token)
-		userStore.setUserInfo(result.user)
-		userStore.setLoginStatus(true)
-		// 登录成功提示
-		uni.showToast({
-			title: '登录成功',
-			icon: 'success'
-		})
-		setTimeout(() => {
-			// 如果用户信息不完整，去个人中心页面完善
-			if (!result.user.nickname || !result.user.avatar) {
-				uni.switchTab({
-					url: '/pages/mine/mine'
-				})
-			} else {
-				// 跳转到聊天页面
-				uni.switchTab({
-					url: '/pages/index/index'
-				})
-			}
-		}, 1000)
-	} catch (err) {
-		console.error('登录失败', err)
-		uni.showToast({
-			title: err.message || '登录失败，请重试',
-			icon: 'none'
-		})
+			// 更新用户状态
+			userStore.setAccessToken(result.access_token)
+			userStore.setRefreshToken(result.refresh_token)
+			userStore.setUserInfo(result.user)
+			userStore.setLoginStatus(true)
+			// 登录成功提示
+			uni.showToast({
+				title: '登录成功',
+				icon: 'success'
+			})
+			setTimeout(() => {
+				// 如果用户信息不完整，去个人中心页面完善
+				if (!result.user.nickname || !result.user.avatar) {
+					uni.switchTab({
+						url: '/pages/mine/mine'
+					})
+				} else {
+					// 跳转到聊天页面
+					uni.switchTab({
+						url: '/pages/index/index'
+					})
+				}
+			}, 1000)
+		} catch (err) {
+			console.error('登录失败', err)
+			uni.showToast({
+				title: err.message || '登录失败，请重试',
+				icon: 'none'
+			})
+		}
 	}
-}
-
 </script>
 
 <style>
-.login-container {
-	position: relative;
-	height: 100vh;
-	background-color: #f8f8f8;
-	overflow: hidden;
-}
-
-.background {
-	position: absolute;
-	width: 100%;
-	height: 100%;
-	z-index: 0;
-}
-
-.circle {
-	position: absolute;
-	border-radius: 50%;
-	background: linear-gradient(135deg, #07C160, #1AAD19);
-	opacity: 0.1;
-}
-
-.circle-1 {
-	width: 600rpx;
-	height: 600rpx;
-	top: -200rpx;
-	right: -200rpx;
-}
-
-.circle-2 {
-	width: 400rpx;
-	height: 400rpx;
-	bottom: -100rpx;
-	left: -100rpx;
-}
-
-.circle-3 {
-	width: 300rpx;
-	height: 300rpx;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
-}
-
-.content {
-	position: relative;
-	z-index: 1;
-	height: 100%;
-	display: flex;
-	flex-direction: column;
-}
-
-.logo-area {
-	flex: 1;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	padding-top: 100rpx;
-}
-
-.app-name {
-	font-size: 48rpx;
-	font-weight: bold;
-	color: #333333;
-	letter-spacing: 2rpx;
-	animation: float 3s ease-in-out infinite;
-}
-
-@keyframes float {
-	0% {
-		transform: translateY(0);
+	.login-container {
+		position: relative;
+		height: 100vh;
+		background-color: #f8f8f8;
+		overflow: hidden;
 	}
 
-	50% {
-		transform: translateY(-20rpx);
+	.background {
+		position: absolute;
+		width: 100%;
+		height: 100%;
+		z-index: 0;
 	}
 
-	100% {
-		transform: translateY(0);
+	.circle {
+		position: absolute;
+		border-radius: 50%;
+		background: linear-gradient(135deg, #07C160, #1AAD19);
+		opacity: 0.1;
 	}
-}
 
-.login-area {
-	flex: 1;
-	padding: 0 60rpx;
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-}
+	.circle-1 {
+		width: 600rpx;
+		height: 600rpx;
+		top: -200rpx;
+		right: -200rpx;
+	}
 
-.welcome-text {
-	margin-bottom: 80rpx;
-	text-align: center;
-}
+	.circle-2 {
+		width: 400rpx;
+		height: 400rpx;
+		bottom: -100rpx;
+		left: -100rpx;
+	}
 
-.title {
-	font-size: 48rpx;
-	font-weight: bold;
-	color: #333333;
-	display: block;
-	margin-bottom: 20rpx;
-	letter-spacing: 2rpx;
-}
+	.circle-3 {
+		width: 300rpx;
+		height: 300rpx;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+	}
 
-.subtitle {
-	font-size: 28rpx;
-	color: #666666;
-	letter-spacing: 1rpx;
-}
+	.content {
+		position: relative;
+		z-index: 1;
+		height: 100%;
+		display: flex;
+		flex-direction: column;
+	}
 
-.login-btn {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	background-color: #07C160;
-	color: #ffffff;
-	height: 88rpx;
-	border-radius: 44rpx;
-	font-size: 32rpx;
-	margin-bottom: 40rpx;
-	box-shadow: 0 8rpx 16rpx rgba(7, 193, 96, 0.2);
-	transition: all 0.3s ease;
-}
+	.logo-area {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		padding-top: 100rpx;
+	}
 
-.login-btn:active {
-	transform: scale(0.98);
-	box-shadow: 0 4rpx 8rpx rgba(7, 193, 96, 0.2);
-}
+	.app-name {
+		font-size: 48rpx;
+		font-weight: bold;
+		color: #333333;
+		letter-spacing: 2rpx;
+		animation: float 3s ease-in-out infinite;
+	}
 
-.agreement {
-	text-align: center;
-	font-size: 24rpx;
-	color: #999999;
-	line-height: 1.6;
-}
+	@keyframes float {
+		0% {
+			transform: translateY(0);
+		}
 
-.link {
-	color: #07C160;
-	position: relative;
-}
+		50% {
+			transform: translateY(-20rpx);
+		}
 
-.link::after {
-	content: '';
-	position: absolute;
-	bottom: -2rpx;
-	left: 0;
-	width: 100%;
-	height: 2rpx;
-	background-color: #07C160;
-	opacity: 0;
-	transition: opacity 0.3s ease;
-}
+		100% {
+			transform: translateY(0);
+		}
+	}
 
-.link:active::after {
-	opacity: 1;
-}
+	.login-area {
+		flex: 1;
+		padding: 0 60rpx;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+	}
+
+	.welcome-text {
+		margin-bottom: 80rpx;
+		text-align: center;
+	}
+
+	.title {
+		font-size: 48rpx;
+		font-weight: bold;
+		color: #333333;
+		display: block;
+		margin-bottom: 20rpx;
+		letter-spacing: 2rpx;
+	}
+
+	.subtitle {
+		font-size: 28rpx;
+		color: #666666;
+		letter-spacing: 1rpx;
+	}
+
+	.login-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background-color: #07C160;
+		color: #ffffff;
+		height: 88rpx;
+		border-radius: 44rpx;
+		font-size: 32rpx;
+		margin-bottom: 40rpx;
+		box-shadow: 0 8rpx 16rpx rgba(7, 193, 96, 0.2);
+		transition: all 0.3s ease;
+	}
+
+	.login-btn:active {
+		transform: scale(0.98);
+		box-shadow: 0 4rpx 8rpx rgba(7, 193, 96, 0.2);
+	}
+
+	.agreement {
+		text-align: center;
+		font-size: 24rpx;
+		color: #999999;
+		line-height: 1.6;
+	}
+
+	.link {
+		color: #07C160;
+		position: relative;
+	}
+
+	.link::after {
+		content: '';
+		position: absolute;
+		bottom: -2rpx;
+		left: 0;
+		width: 100%;
+		height: 2rpx;
+		background-color: #07C160;
+		opacity: 0;
+		transition: opacity 0.3s ease;
+	}
+
+	.link:active::after {
+		opacity: 1;
+	}
 </style>

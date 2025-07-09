@@ -1,9 +1,13 @@
 from flask import Blueprint, request, current_app, Response, stream_with_context
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from langchain_core.messages import AIMessage
+import time
+
 from app import db
 from app.models import Chat, Message, Model, User
 from app.services.chat_service import ChatService
 from common.result import Result
+import json
 
 bp = Blueprint('chat', __name__)
 
@@ -60,10 +64,13 @@ def get_messages(chat_id):
     except Exception as e:
         return Result.error(message=str(e)).to_json()
 
-@bp.route('/chats/<int:chat_id>/messages', methods=['POST'])
+
+@bp.route('/chats/<int:chat_id>/messages/stream', methods=['POST'])
 @jwt_required()
-def send_message(chat_id):
+def send_message_stream(chat_id):
+    """流式聊天接口"""
     try:
+        print(f"开始处理流式聊天请求，chat_id: {chat_id}")
         user_id = get_jwt_identity()
         user = User.query.get_or_404(int(user_id))
         chat = Chat.query.filter_by(id=chat_id, user_id=user.id).first_or_404()
@@ -72,7 +79,8 @@ def send_message(chat_id):
         content = data.get('content')
         model_id = data.get('model_id')
         repository_id = data.get('repository_id') or None
-        print(f"{model_id}:{repository_id}")
+        
+        print(f"请求参数: content={content}, model_id={model_id}, repository_id={repository_id}")
         
         if not content:
             return Result.bad_request(message="消息内容不能为空").to_json()
@@ -81,6 +89,7 @@ def send_message(chat_id):
             
         # 查询模型信息
         model = Model.query.get_or_404(model_id)
+        print(f"使用模型: {model.name}")
         
         # 检查是否是第一条消息
         is_first_message = Message.query.filter_by(chat_id=chat_id).count() == 0
@@ -95,30 +104,44 @@ def send_message(chat_id):
             chat.title = content[:8] + '...' if len(content) > 8 else content
             db.session.commit()
         
-        # 获取历史消息
-        # history_messages = Message.query.filter_by(chat_id=chat_id).order_by(Message.created_at.asc()).all()
-        # messages = [{'role': msg.role, 'content': msg.content} for msg in history_messages]
-        
         # 使用 LangChain 处理聊天，传入知识库ID
-        print(f'模型名字 {model.name}' )
         chat_service = ChatService(model.name, repository_id)
-        ai_content = chat_service.chat(chat_id, content)
-
+        print("ChatService 创建成功，开始流式处理...")
+        stream_response = chat_service.chat_stream(chat_id, content)
+        print("开始生成流式响应...")
         
-        # 保存AI消息
-        ai_message = Message(chat_id=chat_id, role='assistant', content=ai_content)
-        db.session.add(ai_message)
-        db.session.commit()
-        
-        return Result.success(data={
-            'id': ai_message.id,
-            'role': ai_message.role,
-            'content': ai_message.content,
-            'created_at': ai_message.created_at.isoformat()
-        }).to_json()
-        
+        def generate():
+            full_content = ""  # 用于收集完整的AI回复
+            try:
+                for chunk in stream_response:
+                    message = chunk[0]
+                    if isinstance(message, AIMessage):  # Filter to just model responses
+                        print(message.content, end="")
+                        full_content += message.content  # 累积内容
+                        yield message.content
+            except Exception as e:
+                error_type = type(e).__name__  # 获取异常类型（如 "ValueError"）
+                error_message = ""
+                print(f"请求异常：{str(e)}")
+                if error_type == "BadRequestError":
+                    error_message = "请求异常，请稍后重试"
+                yield error_message
+            finally:
+                # 流式传输完成后，保存AI回复到数据库
+                if full_content and not full_content.startswith("错误:"):
+                    try:
+                        # 保存AI消息到数据库
+                        ai_message = Message(chat_id=chat_id, role='assistant', content=full_content)
+                        db.session.add(ai_message)
+                        db.session.commit()
+                        print(f"AI回复已保存到数据库，内容长度: {len(full_content)}")
+                    except Exception as save_error:
+                        print(f"保存AI回复到数据库时出错: {str(save_error)}")
+                        db.session.rollback()
+                
+        return Response(stream_with_context(generate()), content_type='text/plain')
     except Exception as e:
-        db.session.rollback()
+        print(f"流式聊天接口错误: {str(e)}")
         return Result.error(message=str(e)).to_json()
 
 @bp.route('/chats/<int:chat_id>', methods=['DELETE'])

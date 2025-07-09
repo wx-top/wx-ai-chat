@@ -30,17 +30,15 @@
 			}
 		},
 		{
-			"path" : "pages/repository/repository",
-			"style" : 
-			{
-				"navigationBarTitleText" : "知识库"
+			"path": "pages/repository/repository",
+			"style": {
+				"navigationBarTitleText": "知识库"
 			}
 		},
 		{
-			"path" : "pages/repository/detail",
-			"style" : 
-			{
-				"navigationBarTitleText" : "知识库详情"
+			"path": "pages/repository/detail",
+			"style": {
+				"navigationBarTitleText": "知识库详情"
 			}
 		}
 	],
@@ -85,7 +83,9 @@
 	"easycom": {
 		"autoscan": true,
 		"custom": {
-			"^privacy-popup": "@/components/privacy-popup/privacy-popup.vue"
+			"^u--(.*)": "@/uni_modules/uview-plus/components/u-$1/u-$1.vue",
+			"^up-(.*)": "@/uni_modules/uview-plus/components/u-$1/u-$1.vue",
+			"^u-([^-].*)": "@/uni_modules/uview-plus/components/u-$1/u-$1.vue"
 		}
 	}
 }

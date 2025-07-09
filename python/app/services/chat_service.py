@@ -1,5 +1,7 @@
 from langchain.chat_models import init_chat_model
 import os
+
+from langchain_core.messages import HumanMessage
 from langchain_core.tools import tool
 from langchain_ollama import OllamaEmbeddings
 from langchain_chroma import Chroma
@@ -10,7 +12,7 @@ from langgraph.graph import END
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import ToolNode, tools_condition
 from langchain.schema import SystemMessage
-from typing import List
+from typing import List, Iterator
 import uuid
 from flask import current_app
 
@@ -26,13 +28,15 @@ class ChatService:
         os.environ["OPENAI_API_KEY"] = current_app.config['OPENAI_API_KEY']
         os.environ["LANGSMITH_TRACING"] = current_app.config['LANGSMITH_TRACING']
         os.environ["LANGSMITH_API_KEY"] = current_app.config['LANGSMITH_API_KEY']
-        
+        baseUrl = current_app.config['OPENAI_API_URL']
+        print(f"请求URL: {baseUrl}")
         # 初始化模型
-        self.model = init_chat_model(base_url=current_app.config['OPENAI_API_URL'],
-                                      model=model_name,
-                                      model_provider=current_app.config['MODEL_PROVIDER'])
+        self.model = init_chat_model(base_url=baseUrl,
+                                model=model_name,
+                                temperature=0.95,
+                                top_p=0.7,
+                                model_provider=current_app.config['MODEL_PROVIDER'])
 
-        
         self.repository_id = repository_id
         
         # 只有在有 repository_id 时才初始化向量数据库
@@ -48,30 +52,9 @@ class ChatService:
             self.retrieve_tool = self._create_retrieve_tool()
             self.tools = ToolNode([self.retrieve_tool])
 
-            # 创建带检索功能的图
-            self.graph_builder = StateGraph(MessagesState)
-            self.graph_builder.add_node(self._query_or_respond)
-            self.graph_builder.add_node(self.tools)
-            self.graph_builder.add_node(self._generate)
-            
-            self.graph_builder.set_entry_point("_query_or_respond")
-            self.graph_builder.add_conditional_edges(
-                "_query_or_respond",
-                tools_condition,
-                {END: END, "tools": "tools"},
-            )
-            self.graph_builder.add_edge("tools", "_generate")
-            self.graph_builder.add_edge("_generate", END)
-        else:
-            # 创建不带检索功能的简单图
-            print('不加载向量数据库...')
-            self.graph_builder = StateGraph(MessagesState)
-            self.graph_builder.add_node(self._simple_generate)
-            self.graph_builder.set_entry_point("_simple_generate")
-            self.graph_builder.add_edge("_simple_generate", END)
         # 添加聊天记录
         # self.graph = self.graph_builder.compile(checkpointer=memory)
-        self.graph = self.graph_builder.compile()
+        # self.graph = self.graph_builder.compile()
 
     def _create_retrieve_tool(self):
         @tool(response_format="content_and_artifact")
@@ -149,7 +132,7 @@ class ChatService:
         ]
         prompt = [SystemMessage(system_message_content)] + conversation_messages
         response = self.model.invoke(prompt)
-        return {"messages": [response]}
+        return {"messages": response}
 
     def load_documents(self, file_path: str, file_type: int):
         """加载用户文档到向量数据库"""
@@ -245,17 +228,6 @@ class ChatService:
             return []
 
     def get_chat_history(self, chat_id: str = None) -> List[dict]:
-        """获取对话历史记录
-        
-        Args:
-            chat_id: 对话ID。如果为None，则获取当前对话的历史记录。
-            
-        Returns:
-            List[dict]: 历史记录列表，每条记录包含：
-                - role: 角色（user/assistant）
-                - content: 消息内容
-                - timestamp: 时间戳
-        """
         try:
             # 构造 RunnableConfig
             config = {
@@ -263,7 +235,6 @@ class ChatService:
                     "thread_id": str(chat_id)
                 }
             }
-            
             # 从 memory 中获取历史记录
             checkpoint = memory.get(config)
             if not checkpoint:
@@ -291,30 +262,58 @@ class ChatService:
             print(f"获取历史记录时出错: {str(e)}")
             return []
 
-    def chat(self, chat_id: int, message: str) -> str:
+
+    def chat_stream(self, chat_id: int, message: str) -> Iterator:
         try:
+            graph_builder = StateGraph(MessagesState)
+            if self.repository_id:
+                graph_builder.add_node(self._query_or_respond)
+                graph_builder.add_node(self.tools)
+                graph_builder.add_node(self._generate)
+                graph_builder.set_entry_point("_query_or_respond")
+                graph_builder.add_conditional_edges(
+                    "_query_or_respond",
+                    tools_condition,
+                    {END: END, "tools": "tools"},
+                )
+                graph_builder.add_edge("tools", "_generate")
+                graph_builder.add_edge("_generate", END)
+            else:
+                graph_builder.add_node(self._simple_generate)
+                graph_builder.set_entry_point("_simple_generate")
+                graph_builder.add_edge("_simple_generate", END)
+            graph = graph_builder.compile()
+            # 使用相同的thread_id来保持对话历史
             # 使用相同的thread_id来保持对话历史
             config = {"configurable": {"thread_id": chat_id}}
-            
+
             print("\n用户问题:", message)
-            r = self.graph.invoke(
+            try:
+                return graph.stream(
                     {"messages": [{"role": "user", "content": message}]},
-                    config=config
-            )
-            content = r["messages"][-1].content
-            print(f"AI回答：{content}")
-            return content
+                    config=config,
+                    stream_mode="messages",
+                )
+            except Exception as stream_error:
+                print(f"流式处理过程中发生错误: {str(stream_error)}")
+                # 返回一个包含错误信息的生成器
+                def error_generator():
+                    yield [{"type": "error", "content": f"流式处理错误: {str(stream_error)}"}]
+                return error_generator()
         except Exception as e:
             print(f"聊天处理错误: {str(e)}")
-            raise
+            # 返回一个包含错误信息的生成器
+            def error_generator():
+                yield [{"type": "error", "content": f"聊天服务错误: {str(e)}"}]
+            return error_generator()
 
 
 # if __name__ == '__main__':
-    # 初始化环境变量    # os.environ["OPENAI_API_KEY"] = "sk-f0d69c29581c40c8a38d0e9a726be2f8"
+    #  初始化环境变量    # os.environ["OPENAI_API_KEY"] = "sk-f0d69c29581c40c8a38d0e9a726be2f8"
     # os.environ["LANGSMITH_TRACING"] = "true"
     # os.environ["LANGSMITH_API_KEY"] = "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"
     # # 创建用户专属的聊天服务实例
-    # cs = ChatService(1, "deepseek-chat", repository_id=1)
+    # cs = ChatService( "deepseek-chat", repository_id=1)
     # print(cs.get_chat_history())
     # # 加载用户文档
     # print(cs.list_documents())

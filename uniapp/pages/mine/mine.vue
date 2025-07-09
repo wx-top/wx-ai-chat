@@ -163,7 +163,11 @@ const onLogout = () => {
 				// 清除用户信息
 				userStore.setUserInfo(null)
 				// 清除token
-				uni.removeStorageSync('token')
+				uni.removeStorageSync('access_token')
+				uni.removeStorageSync('refresh_token')
+				uni.removeStorageSync('user_info')
+				uni.removeStorageSync('user_info')
+				uni.removeStorageSync('user_login_status')
 				// 跳转到登录页
 				uni.reLaunch({
 					url: '/pages/login/login'

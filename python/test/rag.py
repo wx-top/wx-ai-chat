@@ -70,10 +70,8 @@ def retrieve(query: str):
 
 def query_or_respond(state: MessagesState):
     """Generate tool call for retrieval or respond."""
-
     llm_with_tools = model.bind_tools([retrieve])
     response = llm_with_tools.invoke(state["messages"])
-
     return {"messages": [response]}
 
 tools = ToolNode([retrieve])

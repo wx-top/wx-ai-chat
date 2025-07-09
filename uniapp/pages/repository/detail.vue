@@ -2,8 +2,7 @@
 	<view class="repository-detail">
 		<!-- 顶部操作栏：搜索框和添加文件按钮 -->
 		<view class="header">
-			<uni-search-bar :focus="true" v-model="keyword">
-			</uni-search-bar>
+			<up-search placeholder="搜索文件" v-model="keyword" :clearabled="true" :showAction="false"></up-search>
 			<button class="add-btn" type="primary" @click="showFilePicker">
 				<text class="button-text">添加</text>
 			</button>
@@ -26,16 +25,24 @@
 				</view>
 			</view>
 		</uni-popup>
-
-		<!-- 文件列表 -->
-		<uni-swipe-action>
-			<uni-swipe-action-item v-for="item in fileList" :right-options="options" @click="onClick($event, item.id)">
-				<view class="file-item">
-					<text class="file-name">{{ item.name }}</text>
-					<text class="file-size">{{ formatFileSize(item.size) }}</text>
-				</view>
-			</uni-swipe-action-item>
-		</uni-swipe-action>
+		<up-list>
+			<up-list-item v-for="(item, index) in fileList" :key="index">
+				<up-cell :title="item.title">
+					<template #title>
+						<view class="list-item-title">
+							<up-text type="primary" :text="item.name"></up-text>
+							<up-text type="info" size="14" :text="formatFileSize(item.size)"></up-text>
+						</view>
+					</template>
+					<template #right-icon>
+						<view class="list-item-btns">
+							<up-button type="success" @click="toDetail(item.id)" size="mini" text="详情"></up-button>
+							<up-button type="error" @click="deleteFileById(item.id)" size="mini" text="删除"></up-button>
+						</view>
+					</template>
+				</up-cell>
+			</up-list-item>
+		</up-list>
 	</view>
 </template>
 
@@ -51,22 +58,6 @@ const fileList = ref([])
 const filePickerPopup = ref(null)
 const selectedFiles = ref([])
 const currentFile = ref(null)
-
-const options = ref([
-	{
-		text: '详情',
-		style: {
-			backgroundColor: '#007AFF'
-		}
-	},
-	{
-		text: '删除',
-		style: {
-			backgroundColor: '#FF0000'
-		}
-	}
-])
-
 onLoad((option) => {
 	repositoryId.value = option.id
 	if (!repositoryId.value) {
@@ -124,84 +115,82 @@ const confirmUpload = async () => {
 		})
 	}
 }
-
-const onClick = ({index}, id) => {
-	if (index === 0) {
-		// 详情 - 打开文档
-		const file = fileList.value.find(item => item.id === id)
-		if (!file) return
-		
-		uni.showLoading({
-			title: '加载中...'
-		})
-		
-		// 构建完整的文件URL
-		const fileUrl = config.baseURL + file.file
-		
-		// 下载文件
-		uni.downloadFile({
-			url: fileUrl,
-			success: function (res) {
-				if (res.statusCode === 200) {
-					// 打开文档
-					uni.openDocument({
-						filePath: res.tempFilePath,
-						showMenu: true,
-						success: function () {
-							console.log('打开文档成功')
-						},
-						fail: function (error) {
-							console.error('打开文档失败：', error)
-							uni.showToast({
-								title: '打开文档失败',
-								icon: 'error'
-							})
-						}
-					})
-				} else {
-					uni.showToast({
-						title: '下载文件失败',
-						icon: 'error'
-					})
-				}
-			},
-			fail: function (error) {
-				console.error('下载文件失败：', error)
+const toDetail = (id) => {
+	const file = fileList.value.find(item => item.id === id)
+	if (!file) return
+	
+	uni.showLoading({
+		title: '加载中...'
+	})
+	
+	// 构建完整的文件URL
+	const fileUrl = config.baseURL + file.file
+	
+	// 下载文件
+	uni.downloadFile({
+		url: fileUrl,
+		success: function (res) {
+			if (res.statusCode === 200) {
+				// 打开文档
+				uni.openDocument({
+					filePath: res.tempFilePath,
+					showMenu: true,
+					success: function () {
+						console.log('打开文档成功')
+					},
+					fail: function (error) {
+						console.error('打开文档失败：', error)
+						uni.showToast({
+							title: '打开文档失败',
+							icon: 'error'
+						})
+					}
+				})
+			} else {
 				uni.showToast({
 					title: '下载文件失败',
 					icon: 'error'
 				})
-			},
-			complete: function () {
-				uni.hideLoading()
 			}
-		})
-	} else if (index === 1) {
-		// 删除
-		uni.showModal({
-			title: '提示',
-			content: '确定要删除该文件吗？',
-			success: async (res) => {
-				if (res.confirm) {
-					try {
-						await deleteFile(repositoryId.value, id)
-						uni.showToast({
-							title: '删除成功',
-							icon: 'success'
-						})
-						loadFileList()
-					} catch (error) {
-						console.log('删除失败：', error)
-						uni.showToast({
-							title: '删除失败',
-							icon: 'error'
-						})
-					}
+		},
+		fail: function (error) {
+			console.error('下载文件失败：', error)
+			uni.showToast({
+				title: '下载文件失败',
+				icon: 'error'
+			})
+		},
+		complete: function () {
+			uni.hideLoading()
+		}
+	})
+}
+
+
+const deleteFileById = (id) => {
+	uni.showModal({
+		title: '提示',
+		content: '确定要删除该文件吗？',
+		success: async (res) => {
+			if (res.confirm) {
+				try {
+					await deleteFile(repositoryId.value, id)
+					uni.showToast({
+						title: '删除成功',
+						icon: 'success'
+					})
+					loadFileList()
+				} catch (error) {
+					console.log('删除失败：', error)
+					uni.showToast({
+						title: '删除失败',
+						icon: 'error'
+					})
 				}
 			}
-		})
-	}
-}
+		}
+	})
+} 
 
 const formatFileSize = (size) => {
 	if (!size) return '0 B'
@@ -235,7 +224,7 @@ onMounted(() => {
 .repository-detail {
 	height: 100vh;
 	padding: 20rpx 30rpx;
-	background-color: #f8f9fa;
+	background-color: #f0f0f0;
 
 	.header {
 		display: flex;

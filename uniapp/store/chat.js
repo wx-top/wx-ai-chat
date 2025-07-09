@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { getChats, createChat, getMessages, sendMessage, deleteChat } from '@/api/chat'
+import { getChats, createChat, getMessages, sendMessage, sendMessageStream, deleteChat } from '@/api/chat'
 import { useModelStore } from './model'
 
 export const useChatStore = defineStore('chat', () => {
@@ -89,12 +89,13 @@ export const useChatStore = defineStore('chat', () => {
       }
       currentMessages.value.push(aiMessage)
 
-      // 发送消息到服务器
-      const response = await sendMessage(
+      // 使用流式传输发送消息到服务器
+      const response = await sendMessageStream(
         currentChatId.value,
         content,
         modelStore.selectedModel.id,
         (chunk) => {
+			console.log("内容: ", chunk)
           // 更新 AI 消息内容
           aiMessage.content += chunk
           // 强制更新视图
@@ -103,8 +104,10 @@ export const useChatStore = defineStore('chat', () => {
         currentRepository.value?.id
       )
       
-      // 更新 AI 消息的完整内容
-      aiMessage.content = response.content
+      // 更新 AI 消息的完整内容（如果需要的话）
+      if (response && response.content) {
+        aiMessage.content = response.content
+      }
       return response
     } catch (error) {
       console.error('发送消息失败', error)
