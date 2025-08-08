@@ -75,41 +75,56 @@ watch(models, (newModels) => {
 <style lang="scss" scoped>
 .container {
   min-height: 100vh;
-  background-color: #f8f8f8;
-  padding: 20rpx;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 24rpx;
+  box-sizing: border-box;
 }
 
 .header {
   text-align: center;
-  margin-bottom: 40rpx;
+  margin-bottom: 48rpx;
   
   .title {
-    font-size: 36rpx;
-    font-weight: bold;
+    font-size: 40rpx;
+    font-weight: 700;
     color: #333;
+    letter-spacing: 1rpx;
   }
 }
 
 .model-list {
-  background-color: #fff;
-  border-radius: 20rpx;
-  padding: 20rpx;
-  margin-bottom: 40rpx;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border-radius: 24rpx;
+  padding: 24rpx;
+  margin-bottom: 48rpx;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.08);
+  border: 1rpx solid rgba(255, 255, 255, 0.8);
 }
 
 .model-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 30rpx;
-  border-bottom: 1rpx solid #f0f0f0;
+  padding: 32rpx 24rpx;
+  border-radius: 16rpx;
+  margin-bottom: 16rpx;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
   
   &:last-child {
-    border-bottom: none;
+    margin-bottom: 0;
+  }
+  
+  &:hover {
+    background: rgba(0, 122, 255, 0.05);
+    transform: translateY(-2rpx);
+    box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
   }
   
   &.selected {
-    background-color: #f8f8f8;
+    background: linear-gradient(135deg, rgba(0, 122, 255, 0.1) 0%, rgba(0, 122, 255, 0.05) 100%);
+    border: 2rpx solid rgba(0, 122, 255, 0.2);
+    box-shadow: 0 4rpx 16rpx rgba(0, 122, 255, 0.15);
   }
 }
 
@@ -118,13 +133,16 @@ watch(models, (newModels) => {
   
   .model-title {
     font-size: 32rpx;
+    font-weight: 600;
     color: #333;
-    margin-bottom: 10rpx;
+    margin-bottom: 8rpx;
+    line-height: 1.4;
   }
   
   .model-name {
     font-size: 26rpx;
     color: #666;
+    line-height: 1.3;
   }
 }
 
@@ -133,30 +151,68 @@ watch(models, (newModels) => {
   text-align: center;
   
   .selected-icon {
-    color: #07C160;
-    font-size: 36rpx;
+    color: #007AFF;
+    font-size: 40rpx;
+    font-weight: bold;
+    text-shadow: 0 2rpx 4rpx rgba(0, 122, 255, 0.2);
   }
 }
 
 .btn-container {
-  padding: 0 40rpx;
+  padding: 0 24rpx;
   
   .confirm-btn {
     width: 100%;
-    height: 88rpx;
-    background: linear-gradient(135deg, #07C160, #1AAD19);
-    border-radius: 44rpx;
+    height: 80rpx;
+    background: linear-gradient(135deg, #007AFF 0%, #0056CC 100%);
+    border-radius: 16rpx;
     display: flex;
     align-items: center;
     justify-content: center;
     color: #fff;
-    font-size: 32rpx;
-    font-weight: 500;
+    font-size: 30rpx;
+    font-weight: 600;
+    box-shadow: 0 6rpx 20rpx rgba(0, 122, 255, 0.25);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    
+    &:hover {
+      background: linear-gradient(135deg, #0056CC 0%, #003d99 100%);
+      transform: translateY(-2rpx);
+      box-shadow: 0 8rpx 25rpx rgba(0, 122, 255, 0.35);
+    }
+    
+    &:active {
+      transform: translateY(0) scale(0.98);
+      box-shadow: 0 4rpx 15rpx rgba(0, 122, 255, 0.2);
+    }
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s;
+    }
+    
+    &:hover::before {
+      left: 100%;
+    }
     
     &.disabled {
-      background: #ccc;
+      background: linear-gradient(135deg, #cccccc 0%, #999999 100%);
       pointer-events: none;
+      transform: none;
+      box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+      
+      &::before {
+        display: none;
+      }
     }
   }
 }
-</style> 
+</style>

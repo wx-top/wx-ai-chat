@@ -1,11 +1,9 @@
 from langchain.chat_models import init_chat_model
 import os
-
-from langchain_core.messages import HumanMessage
 from langchain_core.tools import tool
 from langchain_ollama import OllamaEmbeddings
 from langchain_chroma import Chroma
-from langchain_community.document_loaders import TextLoader, PyPDFLoader
+from langchain_community.document_loaders import TextLoader, PyPDFLoader, Docx2txtLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langgraph.graph import MessagesState, StateGraph
 from langgraph.graph import END
@@ -103,7 +101,7 @@ class ChatService:
         print(docs_content)
         
         system_message_content = (
-            "你是一个专注用中文交流的政务助手，请遵守以下规则：1. 无论用户输入何种语言，始终使用简体中文回应。2. 不使用任何英文词汇，代码注释、网页链接例外。"
+            f"{current_app.config['LANGSMITH_API_KEY']}"
             "\n\n"
             f"{docs_content}"
         )
@@ -122,7 +120,7 @@ class ChatService:
     def _simple_generate(self, state: MessagesState):
         """直接生成回答，不使用检索"""
         system_message_content = (
-            "你是一个专注用中文交流的政务助手，请遵守以下规则：1. 无论用户输入何种语言，始终使用简体中文回应。2. 不使用任何英文词汇，代码注释、网页链接例外。"
+            f"{current_app.config['LANGSMITH_API_KEY']}"
         )
         conversation_messages = [
             message
@@ -133,6 +131,7 @@ class ChatService:
         prompt = [SystemMessage(system_message_content)] + conversation_messages
         response = self.model.invoke(prompt)
         return {"messages": response}
+
 
     def load_documents(self, file_path: str, file_type: int):
         """加载用户文档到向量数据库"""
@@ -149,6 +148,10 @@ class ChatService:
                 loader = TextLoader(file_path, encoding="utf-8")
             elif file_type == 2:
                 loader = PyPDFLoader(file_path)
+            elif file_type == 3:
+                loader = Docx2txtLoader(file_path)
+            else:
+                return None
 
             docs = loader.load()
             print(f"成功加载文档，共 {len(docs)} 个文档")

@@ -1,6 +1,7 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
+from flask_cors import CORS
 from config import Config
 import pymysql
 
@@ -14,6 +15,15 @@ def create_app(config_class=Config):
     # 初始化扩展
     db.init_app(app)
     jwt.init_app(app)
+    
+    # 配置CORS - 允许所有域名访问
+    CORS(app, resources={
+        r"/api/*": {
+            "origins": "*",  # 允许所有域名访问
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"]
+        }
+    })
     
     # 创建数据库（如果不存在）
     with app.app_context():
@@ -65,4 +75,4 @@ def create_app(config_class=Config):
             identity = jwt_data["sub"]  # identity 是字符串类型的用户 ID
             return User.query.get(int(identity))  # 将字符串转换为整数后查询用户
     
-    return app 
+    return app

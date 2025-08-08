@@ -1,7 +1,6 @@
 <template>
 	<view class="history-container">
 		<!-- 会话列表 -->
-		<up-search placeholder="搜索会话" v-model="keyword" :clearabled="true"></up-search>
 		<up-list>
 			<up-list-item v-for="(item, index) in chats" :key="index">
 				<up-cell :title="item.title">
@@ -108,15 +107,122 @@
 	})
 </script>
 
-<style>
+<style scoped>
 	.history-container {
-		padding: 20rpx;
+		padding: 32rpx 24rpx 180rpx;
 		height: 100vh;
-		background-color: #f0f0f0;
+		background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+		box-sizing: border-box;
+	}
+
+	/* H5平台样式修复 */
+	/* #ifdef H5 */
+	.history-container {
+		height: 100vh;
+		max-height: 100vh;
+		overflow-y: auto;
+		box-sizing: border-box;
+		padding: 32rpx 24rpx 180rpx;
+	}
+	/* #endif */
+
+	.list-item-title {
+		display: flex;
+		flex-direction: column;
+		gap: 8rpx;
 	}
 
 	.list-item-btns {
 		display: flex;
-		gap: 5rpx;
+		gap: 12rpx;
+		align-items: center;
+	}
+
+	/* 自定义搜索框样式 */
+	:deep(.u-search) {
+		margin-bottom: 32rpx;
+		border-radius: 16rpx;
+		box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
+		background: #ffffff;
+		border: 1rpx solid rgba(255, 255, 255, 0.8);
+	}
+
+	:deep(.u-search__content) {
+		border-radius: 16rpx;
+		background: #ffffff;
+		border: none;
+		box-shadow: inset 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+	}
+
+	/* 自定义列表样式 */
+	:deep(.u-list-item) {
+		margin-bottom: 20rpx;
+		border-radius: 16rpx;
+		background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+		box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
+		border: 1rpx solid rgba(255, 255, 255, 0.8);
+		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+		overflow: hidden;
+	}
+
+	:deep(.u-list-item:hover) {
+		transform: translateY(-2rpx);
+		box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.12);
+	}
+
+	:deep(.u-cell) {
+		padding: 24rpx;
+		background: transparent;
+		border: none;
+	}
+
+	/* 自定义按钮样式 */
+	:deep(.u-button--success) {
+		background: linear-gradient(135deg, #007AFF 0%, #0056CC 100%);
+		border: none;
+		border-radius: 12rpx;
+		box-shadow: 0 4rpx 12rpx rgba(0, 122, 255, 0.25);
+		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+		font-weight: 600;
+	}
+
+	:deep(.u-button--success:hover) {
+		background: linear-gradient(135deg, #0056CC 0%, #003d99 100%);
+		transform: translateY(-1rpx);
+		box-shadow: 0 6rpx 16rpx rgba(0, 122, 255, 0.35);
+	}
+
+	:deep(.u-button--error) {
+		background: linear-gradient(135deg, #ff4757 0%, #ff3742 100%);
+		border: none;
+		border-radius: 12rpx;
+		box-shadow: 0 4rpx 12rpx rgba(255, 71, 87, 0.25);
+		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+		font-weight: 600;
+	}
+
+	:deep(.u-button--error:hover) {
+		background: linear-gradient(135deg, #ff3742 0%, #ff1e2d 100%);
+		transform: translateY(-1rpx);
+		box-shadow: 0 6rpx 16rpx rgba(255, 71, 87, 0.35);
+	}
+
+	:deep(.u-button--mini) {
+		height: 56rpx;
+		min-width: 80rpx;
+		font-size: 24rpx;
+		padding: 0 16rpx;
+	}
+
+	/* 文本样式优化 */
+	:deep(.u-text--primary) {
+		font-weight: 600;
+		font-size: 30rpx;
+		color: #333333;
+	}
+
+	:deep(.u-text--info) {
+		color: #999999;
+		font-size: 24rpx;
 	}
 </style>

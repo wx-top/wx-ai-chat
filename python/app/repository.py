@@ -22,7 +22,7 @@ def allowed_file(filename):
 
 def get_file_type(filename):
     ext = filename.rsplit('.', 1)[1].lower()
-    return ALLOWED_EXTENSIONS.get(ext, 4)  # 默认为其他类型
+    return ALLOWED_EXTENSIONS.get(ext, 1)  # 默认为其他类型
 
 @bp.route('/repositories', methods=['POST'])
 @jwt_required()
@@ -37,7 +37,8 @@ def create_repository():
             
         repository = Repository(
             name=data['name'],
-            remark=data.get('remark', '')
+            remark=data.get('remark', ''),
+            user_id=user_id
         )
         db.session.add(repository)
         db.session.commit()
@@ -50,7 +51,8 @@ def create_repository():
         }).to_json()
     except Exception as e:
         db.session.rollback()
-        return Result.error(message=str(e)).to_json()
+        print(f"创建知识库错误: {str(e)}")
+        return Result.error(message="创建知识库失败，请稍后重试").to_json()
 
 @bp.route('/repositories/<int:repository_id>/files', methods=['POST'])
 @jwt_required()
@@ -80,7 +82,7 @@ def upload_file(repository_id):
             return Result.bad_request(message="不支持的文件类型").to_json()
         
         # 生成安全的文件名
-        filename = secure_filename(file.filename)
+        filename = file.filename
         filename = f"{repository_id}_{filename}"  # 添加知识库ID前缀避免文件名冲突
         
         # 确保上传目录存在
@@ -97,9 +99,13 @@ def upload_file(repository_id):
         # 获取文件类型
         file_type = get_file_type(filename)
 
+        print(f"file_type {file_type}")
+
         cs = ChatService(repository_id=repository_id)
         file_id = cs.load_documents(file_path, file_type)
 
+        if file_id is None:
+            return Result.error("文件类型暂不支持").to_json()
         
         # 保存文件记录到数据库
         repository_file = RepositoryFile(
@@ -131,7 +137,23 @@ def upload_file(repository_id):
 def get_repositories():
     """获取知识库列表"""
     try:
-        repositories = Repository.query.order_by(Repository.created_at.desc()).all()
+        user_id = get_jwt_identity()
+        
+        # 获取查询参数
+        keyword = request.args.get('keyword', '').strip()
+        
+        # 构建查询
+        query = Repository.query.filter_by(user_id=user_id)
+        
+        # 如果有关键字，添加模糊查询条件
+        if keyword:
+            query = query.filter(
+                Repository.name.contains(keyword) | 
+                Repository.remark.contains(keyword)
+            )
+        
+        repositories = query.order_by(Repository.created_at.desc()).all()
+        
         return Result.success(data=[{
             'id': repo.id,
             'name': repo.name,
@@ -147,6 +169,8 @@ def get_repository_files(repository_id):
     """获取知识库文件列表"""
     try:
         repository = Repository.query.get_or_404(repository_id)
+        if not repository:
+            return Result.error("没有对应的知识库").to_json()
         files = RepositoryFile.query.filter_by(repository_id=repository_id).order_by(RepositoryFile.created_at.desc()).all()
         return Result.success(data=[{
             'id': file.id,
@@ -166,8 +190,6 @@ def delete_file(repository_id, file_id):
     try:
         # 检查知识库是否存在
         repository = Repository.query.get_or_404(repository_id)
-
-
 
         if not repository:
             return Result.bad_request(message="知识库不存在").to_json()
@@ -241,4 +263,4 @@ def update_repository(repository_id):
         }).to_json()
     except Exception as e:
         db.session.rollback()
-        return Result.error(message=str(e)).to_json() 
+        return Result.error(message=str(e)).to_json()

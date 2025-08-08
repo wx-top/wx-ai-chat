@@ -1,7 +1,7 @@
 <template>
-	<view class="chat-container">
-		<!-- 顶部模型选择 -->
-		<view class="header">
+	<view class="page-container">
+		<!-- 固定顶部区域 -->
+		<view class="header-fixed">
 			<view class="model-selector">
 				<up-cell @click="modelPickerShow = true" :title="selectedModel ? '': '选择模型'" isLink>
 					<template #value>
@@ -31,25 +31,29 @@
 			</view>
 		</view>
 
-		<!-- 聊天记录 -->
-		<scroll-view class="chat-messages" scroll-y="true" :scroll-top="scrollTop" scroll-with-animation>
-			<view class="message-list">
-				<view v-for="(message, index) in currentMessages" :key="index"
-					:class="['message', message.role === 'user' ? 'message-user' : 'message-ai']">
-					<view class="message-content">
-						<text>{{ message.content || '正在思考...' }}</text>
+		<!-- 聊天消息区域 -->
+		<view class="chat-content">
+			<scroll-view class="message-scroll" scroll-y="true" :scroll-top="scrollTop" scroll-with-animation>
+				<view class="message-list">
+					<view v-for="(message, index) in currentMessages" :key="index"
+						:class="['message', message.role === 'user' ? 'message-user' : 'message-ai']">
+						<view class="message-content">
+							<text>{{ message.content || '正在思考...' }}</text>
+						</view>
 					</view>
 				</view>
-			</view>
-		</scroll-view>
+			</scroll-view>
+		</view>
 
-		<!-- 输入区域 -->
-		<view class="input-area">
-			<textarea class="message-input" v-model="inputMessage" placeholder="请输入消息..." :disabled="loading"
-				auto-height @keydown.enter.prevent="sendMessage" />
-			<button class="send-btn" :disabled="!inputMessage.trim() || loading" @click="sendMessage">
-				发送
-			</button>
+		<!-- 固定底部输入区域 -->
+		<view class="input-fixed">
+			<view class="input-wrapper">
+				<textarea class="message-input" v-model="inputMessage" placeholder="请输入消息..." :disabled="loading"
+					auto-height @keydown.enter.prevent="sendMessage" />
+				<button class="send-btn" :disabled="!inputMessage.trim() || loading" @click="sendMessage">
+					<uni-icons type="paperplane-filled" size="18" color="#ffffff"></uni-icons>
+				</button>
+			</view>
 		</view>
 	</view>
 </template>
@@ -57,11 +61,9 @@
 <script setup>
 	import {
 		ref,
-		computed,
 		nextTick,
 		watch,
 		onMounted,
-		toRef
 	} from 'vue'
 	import {
 		useChatStore
@@ -83,7 +85,6 @@
 	const modelStore = useModelStore()
 	const inputMessage = ref('')
 	const scrollTop = ref(0)
-	const repositoryPopup = ref(null)
 	const repositories = ref([])
 
 	const currentModel = ref(null)
@@ -105,7 +106,6 @@
 	
 	const modelPickerConfirm = (e) => {
 		console.log("选择", e)
-		// currentModel.value = e.value[0]
 		selectedModel.value = e.value[0]
 	}
 	
@@ -169,17 +169,6 @@
 		}
 	}
 
-	// 格式化时间
-	const formatTime = (timestamp) => {
-		if (!timestamp) return ''
-
-		const date = new Date(timestamp)
-		const hours = date.getHours().toString().padStart(2, '0')
-		const minutes = date.getMinutes().toString().padStart(2, '0')
-
-		return `${hours}:${minutes}`
-	}
-
 	// 滚动到底部
 	const scrollToBottom = async () => {
 		await nextTick()
@@ -240,168 +229,282 @@
 </script>
 
 <style>
-	.chat-container {
+	/* 页面容器 - 考虑tabbar高度 */
+	.page-container {
+		position: relative;
+		width: 100%;
+		height: calc(100vh - var(--window-bottom));
+		background-color: #f5f5f5;
+		overflow: hidden;
 		display: flex;
 		flex-direction: column;
-		height: 100vh;
-		padding: 0 15px;
 	}
 
-	.header {
+	/* 固定顶部区域 */
+	.header-fixed {
+		flex-shrink: 0;
+		background-color: white;
+		border-bottom: 2rpx solid #e0e0e0;
+		padding: 20rpx 30rpx;
 		display: flex;
 		justify-content: space-between;
-		padding: 10px 0;
-		background-color: white;
-		border-bottom: 1px solid #e0e0e0;
+		align-items: center;
+		box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+		z-index: 100;
 	}
 
+	/* 聊天内容区域 */
+	.chat-content {
+		flex: 1;
+		padding: 0 30rpx;
+		overflow: hidden;
+		position: relative;
+	}
+
+	/* 消息滚动区域 */
+	.message-scroll {
+		height: 100%;
+		width: 100%;
+		overflow-y: auto;
+		overflow-x: hidden;
+	}
+
+	/* 固定底部输入区域 */
+	.input-fixed {
+		flex-shrink: 0;
+		background-color: white;
+		border-top: 2rpx solid #e0e0e0;
+		padding: 16rpx 24rpx;
+		box-shadow: 0 -2rpx 8rpx rgba(0, 0, 0, 0.1);
+		z-index: 0;
+	}
+
+	.input-wrapper {
+		display: flex;
+		align-items: flex-end;
+		gap: 12rpx;
+		background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+		border-radius: 20rpx;
+		padding: 16rpx;
+		box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.08);
+	}
+
+	/* 模型选择器 */
 	.model-selector {
+		font-size: 28rpx;
+	}
+
+	/* 头部按钮组 */
+	.header-buttons {
 		display: flex;
 		align-items: center;
-		font-size: 14px;
-	}
-
-	.icon {
-		margin-left: 5px;
-		font-size: 12px;
+		gap: 20rpx;
 	}
 
 	.new-chat-btn {
 		color: #007AFF;
-		font-size: 14px;
-		padding: 6px 10px;
+		font-size: 28rpx;
+		padding: 12rpx 24rpx;
+		border: 2rpx solid #007AFF;
+		border-radius: 20rpx;
+		background-color: transparent;
 	}
 
-	.chat-messages {
-		flex: 1;
-		padding: 10px 0;
-		background-color: #f5f5f5;
-		overflow-y: auto;
-		/* 隐藏滚动条 */
-		scrollbar-width: none;
-		/* Firefox */
-		-ms-overflow-style: none;
-		/* IE and Edge */
+	/* 知识库选择 */
+	.repository-container {
+		display: flex;
+		align-items: center;
+		gap: 8rpx;
 	}
 
-	/* 隐藏 Webkit 浏览器的滚动条 */
-	.chat-messages::-webkit-scrollbar {
-		display: none;
+	.repository-btn {
+		display: flex;
+		align-items: center;
+		gap: 16rpx;
+		padding: 8rpx 16rpx;
+		background-color: #f0f0f0;
+		border-radius: 30rpx;
+		font-size: 28rpx;
 	}
 
+	.repository-name {
+		color: #007AFF;
+		font-size: 28rpx;
+	}
+
+	.repository-cancel {
+		padding: 8rpx;
+		cursor: pointer;
+	}
+
+	/* 消息列表 */
 	.message-list {
 		display: flex;
 		flex-direction: column;
-		gap: 12px;
-		padding-bottom: 10px;
+		gap: 24rpx;
+		padding: 30rpx 0;
+		min-height: calc(100% - 60rpx);
 	}
 
 	.message {
 		max-width: 75%;
-		border-radius: 12px;
-		padding: 8px 12px;
+		border-radius: 24rpx;
+		padding: 20rpx 24rpx;
 		position: relative;
 		word-break: break-word;
+		line-height: 1.5;
 	}
 
 	.message-user {
 		align-self: flex-end;
 		background-color: #007AFF;
 		color: white;
-		margin-right: 10px;
+		margin-right: 20rpx;
 	}
 
 	.message-ai {
 		align-self: flex-start;
 		background-color: white;
 		color: #333;
-		border: 1px solid #e0e0e0;
-		margin-left: 10px;
+		border: 2rpx solid #e0e0e0;
+		margin-left: 20rpx;
+		box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
 	}
 
 	.message-content {
-		line-height: 1.4;
-		font-size: 14px;
+		font-size: 28rpx;
+		line-height: 1.6;
 	}
 
-	.input-area {
-		background-color: white;
-		border-top: 1px solid #e0e0e0;
-		padding: 10px 0;
-		display: flex;
-		align-items: flex-end;
-	}
-
+	/* 输入框样式 */
 	.message-input {
 		flex: 1;
-		border: 1px solid #e0e0e0;
-		border-radius: 18px;
-		padding: 8px 12px;
-		max-height: 100px;
-		min-height: 36px;
-		margin-right: 8px;
+		border: none;
+		border-radius: 16rpx;
+		padding: 16rpx 20rpx;
+		max-height: 120rpx;
+		min-height: 64rpx;
+		font-size: 28rpx;
+		background: #ffffff;
+		resize: none;
+		line-height: 1.4;
+		box-sizing: border-box;
+		color: #333333;
+		box-shadow: inset 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+		transition: all 0.3s ease;
+	}
+
+	.message-input:focus {
+		outline: none;
+		background: #ffffff;
+		box-shadow: inset 0 2rpx 8rpx rgba(0, 0, 0, 0.06), 0 0 0 3rpx rgba(0, 122, 255, 0.1);
+		transform: translateY(-1rpx);
+	}
+
+	.message-input::placeholder {
+		color: #999999;
+		font-size: 26rpx;
 	}
 
 	.send-btn {
-		background-color: #007AFF;
+		background: linear-gradient(135deg, #007AFF 0%, #0056CC 100%);
 		color: white;
-		border-radius: 18px;
-		height: 36px;
-		width: 70px;
-		font-size: 14px;
+		border-radius: 16rpx;
+		height: 64rpx;
+		width: 64rpx;
+		font-size: 28rpx;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		padding: 0;
+		border: none;
+		box-shadow: 0 4rpx 16rpx rgba(0, 122, 255, 0.25);
+		flex-shrink: 0;
+		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+		position: relative;
+		overflow: hidden;
 	}
 
 	.send-btn:disabled {
-		background-color: #ccc;
+		background: linear-gradient(135deg, #cccccc 0%, #999999 100%);
+		box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+		cursor: not-allowed;
+		transform: none;
+		opacity: 0.6;
 	}
 
-	/* 移除 chat-list 相关样式 */
+	.send-btn:not(:disabled):hover {
+		background: linear-gradient(135deg, #0056CC 0%, #003d99 100%);
+		transform: translateY(-2rpx) scale(1.02);
+		box-shadow: 0 8rpx 25rpx rgba(0, 122, 255, 0.35);
+	}
+
+	.send-btn:not(:disabled):active {
+		transform: translateY(0) scale(0.98);
+		box-shadow: 0 4rpx 15rpx rgba(0, 122, 255, 0.2);
+	}
+
+	.send-btn::before {
+		content: '';
+		position: absolute;
+		top: 0;
+		left: -100%;
+		width: 100%;
+		height: 100%;
+		background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+		transition: left 0.5s;
+	}
+
+	.send-btn:not(:disabled):hover::before {
+		left: 100%;
+	}
+
+	/* H5平台特殊适配 */
+	/* #ifdef H5 */
+	.page-container {
+		height: calc(100vh - 50px); /* 为tabbar留出空间 */
+	}
+
+	/* 确保输入框在H5中完全可见 */
+	.input-wrapper {
+		margin: 12rpx;
+		padding: 12rpx;
+	}
+
+	.message-input {
+		max-height: 100rpx !important;
+		font-size: 26rpx !important;
+		min-height: 56rpx !important;
+	}
+
+	.send-btn {
+		height: 56rpx !important;
+		width: 56rpx !important;
+	}
+	/* #endif */
+
+	/* 隐藏滚动条但保持滚动功能 */
+	.message-scroll {
+		scrollbar-width: none; /* Firefox */
+		-ms-overflow-style: none; /* IE and Edge */
+	}
+
+	.message-scroll::-webkit-scrollbar {
+		display: none; /* Webkit */
+	}
+
+	/* 移除不需要的样式 */
 	.chat-list,
 	.chat-item,
 	.chat-title {
 		display: none;
 	}
 
-	.header-buttons {
-		display: flex;
-		align-items: center;
-		gap: 10px;
-	}
-
-	.repository-container {
-		display: flex;
-		align-items: center;
-		gap: 4px;
-	}
-
-	.repository-btn {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		padding: 4px 8px;
-		background-color: #f0f0f0;
-		border-radius: 15px;
-		font-size: 14px;
-	}
-
-	.repository-name {
-		color: #007AFF;
-		font-size: 14px;
-	}
-
-	.repository-cancel {
-		padding: 4px;
-		cursor: pointer;
-	}
-
+	/* 弹窗相关样式保持不变 */
 	.repository-popup {
 		background-color: white;
-		border-radius: 20px 20px 0 0;
-		padding: 20px;
+		border-radius: 40rpx 40rpx 0 0;
+		padding: 40rpx;
 		max-height: 60vh;
 	}
 
@@ -409,44 +512,43 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		margin-bottom: 20px;
+		margin-bottom: 40rpx;
 	}
 
 	.popup-title {
-		font-size: 16px;
+		font-size: 32rpx;
 		font-weight: bold;
 	}
 
 	.close-btn {
-		font-size: 24px;
+		font-size: 48rpx;
 		color: #999;
-		padding: 0 10px;
+		padding: 0 20rpx;
 	}
 
 	.repository-list {
-		max-height: calc(60vh - 60px);
+		max-height: calc(60vh - 120rpx);
 	}
 
 	.repository-item {
-		padding: 15px;
-		border-bottom: 1px solid #f0f0f0;
+		padding: 30rpx;
+		border-bottom: 2rpx solid #f0f0f0;
 	}
 
 	.repository-remark {
-		font-size: 12px;
+		font-size: 24rpx;
 		color: #999;
 	}
 
 	.repository-item-selected {
 		background-color: #e6f7ff;
-		border-radius: 8px;
-		box-shadow: 0 2px 8px rgba(0, 122, 255, 0.1);
+		border-radius: 16rpx;
+		box-shadow: 0 4rpx 16rpx rgba(0, 122, 255, 0.1);
 	}
-
 
 	.repository-tag {
 		display: flex;
 		align-items: center;
-		gap: 4px;
+		gap: 8rpx;
 	}
 </style>

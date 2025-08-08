@@ -1,8 +1,8 @@
 import { useUserStore } from "../store/user.js";
-
+import APP_CONFIG from '@/config/app.js'
 // 基础配置
 export const config = {
-  baseURL: "https://wxapi.wenxin.icu", // 基础请求地址
+  baseURL: APP_CONFIG.API_BASE_URL, // 基础请求地址
   header: {
     "content-type": "application/json",
   },

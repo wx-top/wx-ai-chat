@@ -95,14 +95,19 @@ def send_message_stream(chat_id):
         is_first_message = Message.query.filter_by(chat_id=chat_id).count() == 0
         
         # 保存用户消息
-        user_message = Message(chat_id=chat_id, role='user', content=content)
-        db.session.add(user_message)
-        db.session.commit()
-        
-        # 如果是第一条消息，使用消息内容的前8个字作为标题
-        if is_first_message:
-            chat.title = content[:8] + '...' if len(content) > 8 else content
+        try:
+            user_message = Message(chat_id=chat_id, role='user', content=content)
+            db.session.add(user_message)
             db.session.commit()
+            
+            # 如果是第一条消息，使用消息内容的前8个字作为标题
+            if is_first_message:
+                chat.title = content[:8] + '...' if len(content) > 8 else content
+                db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            print(f"保存用户消息错误: {str(e)}")
+            return Result.error(message="保存消息失败，请稍后重试").to_json()
         
         # 使用 LangChain 处理聊天，传入知识库ID
         chat_service = ChatService(model.name, repository_id)
@@ -161,4 +166,4 @@ def delete_chat(chat_id):
         return Result.success().to_json()
     except Exception as e:
         db.session.rollback()
-        return Result.error(message=str(e)).to_json() 
+        return Result.error(message=str(e)).to_json()

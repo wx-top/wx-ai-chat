@@ -185,6 +185,16 @@ const onLogout = () => {
 	padding: 40rpx;
 }
 
+/* H5平台样式修复 */
+/* #ifdef H5 */
+.container {
+	height: 100vh;
+	max-height: 100vh;
+	overflow-y: auto;
+	box-sizing: border-box;
+}
+/* #endif */
+
 .header {
 	text-align: center;
 	margin-bottom: 60rpx;
@@ -203,10 +213,11 @@ const onLogout = () => {
 }
 
 .form-container {
-	background-color: #fff;
-	border-radius: 20rpx;
-	padding: 40rpx;
-	box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
+	background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+	border-radius: 24rpx;
+	padding: 48rpx;
+	box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.08);
+	border: 1rpx solid rgba(255, 255, 255, 0.8);
 }
 
 .avatar-section {
@@ -238,8 +249,9 @@ const onLogout = () => {
 			border-radius: 50%;
 			background-color: #f0f0f0;
 			margin-bottom: 20rpx;
-			border: 4rpx solid #fff;
-			box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+			border: 6rpx solid #ffffff;
+			box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.12), 0 0 0 2rpx rgba(0, 122, 255, 0.1);
+			transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 		}
 		
 		.avatar-tip {
@@ -258,15 +270,25 @@ const onLogout = () => {
 	
 	.nickname-input {
 		width: 100%;
-		height: 88rpx;
-		background-color: #f8f8f8;
-		border-radius: 44rpx;
-		padding: 0 40rpx;
+		height: 80rpx;
+		background: #ffffff;
+		border: none;
+		border-radius: 16rpx;
+		padding: 0 24rpx;
 		font-size: 28rpx;
 		color: #333;
+		box-shadow: inset 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+		transition: all 0.3s ease;
+		box-sizing: border-box;
+		
+		&:focus {
+			box-shadow: inset 0 2rpx 8rpx rgba(0, 0, 0, 0.06), 0 0 0 3rpx rgba(0, 122, 255, 0.1);
+			transform: translateY(-1rpx);
+		}
 		
 		&::placeholder {
 			color: #999;
+			font-size: 26rpx;
 		}
 	}
 }
@@ -277,47 +299,93 @@ const onLogout = () => {
 	
 	.submit-btn {
 		width: 100%;
-		height: 88rpx;
-		background: linear-gradient(135deg, #07C160, #1AAD19);
-		border-radius: 44rpx;
+		height: 80rpx;
+		background: linear-gradient(135deg, #007AFF 0%, #0056CC 100%);
+		border-radius: 16rpx;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		color: #fff;
-		font-size: 32rpx;
-		font-weight: 500;
-		box-shadow: 0 8rpx 16rpx rgba(7, 193, 96, 0.2);
-		transition: all 0.3s ease;
+		font-size: 30rpx;
+		font-weight: 600;
+		box-shadow: 0 6rpx 20rpx rgba(0, 122, 255, 0.25);
+		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+		position: relative;
+		overflow: hidden;
 		
 		&.loading {
 			opacity: 0.8;
 			pointer-events: none;
 		}
 		
+		&:hover {
+			background: linear-gradient(135deg, #0056CC 0%, #003d99 100%);
+			transform: translateY(-2rpx);
+			box-shadow: 0 8rpx 25rpx rgba(0, 122, 255, 0.35);
+		}
+		
 		&:active {
-			transform: scale(0.98);
-			box-shadow: 0 4rpx 8rpx rgba(7, 193, 96, 0.2);
+			transform: translateY(0) scale(0.98);
+			box-shadow: 0 4rpx 15rpx rgba(0, 122, 255, 0.2);
+		}
+		
+		&::before {
+			content: '';
+			position: absolute;
+			top: 0;
+			left: -100%;
+			width: 100%;
+			height: 100%;
+			background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+			transition: left 0.5s;
+		}
+		
+		&:hover::before {
+			left: 100%;
 		}
 	}
 
 	.logout-btn {
 		width: 100%;
-		height: 88rpx;
-		background: #ff4d4f;
-		border-radius: 44rpx;
+		height: 80rpx;
+		background: linear-gradient(135deg, #ff4757 0%, #ff3742 100%);
+		border-radius: 16rpx;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		color: #fff;
-		font-size: 32rpx;
-		font-weight: 500;
-		margin-top: 40rpx;
-		box-shadow: 0 8rpx 16rpx rgba(255, 77, 79, 0.15);
-		transition: all 0.3s ease;
+		font-size: 30rpx;
+		font-weight: 600;
+		margin-top: 32rpx;
+		box-shadow: 0 6rpx 20rpx rgba(255, 71, 87, 0.25);
+		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+		position: relative;
+		overflow: hidden;
+
+		&:hover {
+			background: linear-gradient(135deg, #ff3742 0%, #ff1e2d 100%);
+			transform: translateY(-2rpx);
+			box-shadow: 0 8rpx 25rpx rgba(255, 71, 87, 0.35);
+		}
 
 		&:active {
-			transform: scale(0.98);
-			box-shadow: 0 4rpx 8rpx rgba(255, 77, 79, 0.15);
+			transform: translateY(0) scale(0.98);
+			box-shadow: 0 4rpx 15rpx rgba(255, 71, 87, 0.2);
+		}
+		
+		&::before {
+			content: '';
+			position: absolute;
+			top: 0;
+			left: -100%;
+			width: 100%;
+			height: 100%;
+			background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+			transition: left 0.5s;
+		}
+		
+		&:hover::before {
+			left: 100%;
 		}
 	}
 }

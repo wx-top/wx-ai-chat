@@ -2,7 +2,8 @@
 	"pages": [{
 			"path": "pages/index/index",
 			"style": {
-				"navigationBarTitleText": "聊天"
+				"navigationBarTitleText": "聊天",
+				"navigationStyle": "custom"
 			}
 		},
 		{
@@ -19,6 +20,12 @@
 		},
 		{
 			"path": "pages/login/login",
+			"style": {
+				"navigationBarTitleText": ""
+			}
+		},
+		{
+			"path": "pages/register/register",
 			"style": {
 				"navigationBarTitleText": ""
 			}

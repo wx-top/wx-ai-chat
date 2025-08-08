@@ -4,10 +4,65 @@ import requests
 from app import db
 from app.models import User
 from common.result import Result
+import bcrypt
 
 bp = Blueprint('auth', __name__)
 
 @bp.route('/login', methods=['POST'])
+def login():
+    username = request.json.get('username')
+    password = request.json.get('password')
+    if (username is None) or (password is None):
+        return Result.error("参数有误").to_json()
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        return Result.error(message="没有该账号").to_json()
+    password = password.encode('utf-8')
+    if not bcrypt.checkpw(password, user.password.encode('utf-8')):
+        return Result.error("账号密码错误").to_json()
+    access_token = create_access_token(identity=user)
+    refresh_token = create_refresh_token(identity=user)
+
+    return Result.success(data={
+        'access_token': access_token,
+        'refresh_token': refresh_token,
+        'user': {
+            'id': user.id,
+            'nickname': user.nickname,
+            'avatar': user.avatar
+        }
+    }).to_json()
+
+
+@bp.route('/register', methods=['POST'])
+def register():
+    username = request.json.get('username')
+    password = request.json.get('password')
+    password_confirm = request.json.get('password_confirm')
+    if (username is None) or (password is None) or (password_confirm is None):
+        return Result.error("参数有误").to_json()
+    if (password != password_confirm):
+        return Result.error("两次密码不一致").to_json()
+    
+    try:
+        user = User.query.filter_by(username=username).first()
+        if user:
+            return Result.error("账号已被占用").to_json()
+        
+        password = password.encode('utf-8')
+        hashed_password = bcrypt.hashpw(password, bcrypt.gensalt())
+        user = User(username=username, password=hashed_password.decode('utf-8'))
+        db.session.add(user)
+        db.session.commit()
+        return Result.success("注册成功").to_json()
+    
+    except Exception as e:
+        db.session.rollback()  # 回滚事务
+        print(f"注册错误: {str(e)}")
+        return Result.error("注册失败，请稍后重试").to_json()
+
+
+@bp.route('/wxlogin', methods=['POST'])
 def wechat_login():
     code = request.json.get('code')
     if not code:
@@ -55,8 +110,9 @@ def wechat_login():
         }).to_json()
         
     except Exception as e:
+        db.session.rollback()  # 回滚事务
         print(f"登录错误: {str(e)}")
-        return Result.error(message=str(e)).to_json()
+        return Result.error(message="登录失败，请稍后重试").to_json()
 
 @bp.route('/refresh', methods=['POST'])
 @jwt_required(refresh=True)
@@ -69,4 +125,4 @@ def refresh():
 @jwt_required()
 def logout():
     # 在前端删除 token 即可
-    return Result.success().to_json() 
+    return Result.success().to_json()

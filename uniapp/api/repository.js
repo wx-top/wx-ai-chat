@@ -4,8 +4,9 @@ export const addRepository = async (data) => {
     return await http.post('/api/repository/repositories', data)
 }
 
-export const getRepositories = async () => {
-    return await http.get('/api/repository/repositories')
+export const getRepositories = async (keyword = '') => {
+    const params = keyword ? { keyword } : {}
+    return await http.get('/api/repository/repositories', params)
 }
 
 // 获取知识库文件列表

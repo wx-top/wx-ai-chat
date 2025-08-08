@@ -12,6 +12,7 @@ class Config:
     OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
     OPENAI_API_URL = os.getenv('OPENAI_API_URL')
     MODEL_PROVIDER = os.getenv('MODEL_PROVIDER', 'openai')
+    MODULE_PROMPT = os.getenv('MODULE_PROMPT', "你是一个全能的智能助手小七")
     # LangSmith配置
     LANGSMITH_API_KEY = os.getenv('LANGSMITH_API_KEY', '')
     LANGSMITH_TRACING = os.getenv('LANGSMITH_TRACING', 'true')

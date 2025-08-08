@@ -29,23 +29,29 @@ def get_profile():
 @bp.route('/profile', methods=['PUT'])
 @jwt_required()
 def update_profile():
-    user_id = get_jwt_identity()  # 获取字符串类型的用户 ID
-    user = User.query.get_or_404(int(user_id))  # 将字符串转换为整数后查询用户
+    user_id = get_jwt_identity()
+    user = User.query.get_or_404(int(user_id))
     
     data = request.get_json()
     if not data:
         return Result.bad_request(message="缺少更新数据").to_json()
     
-    if 'nickname' in data:
-        user.nickname = data['nickname']
+    try:
+        if 'nickname' in data:
+            user.nickname = data['nickname']
+        
+        db.session.commit()
+        return Result.success(data={
+            'id': user.id,
+            'nickname': user.nickname,
+            'avatar': user.avatar,
+            'created_at': user.created_at.isoformat()
+        }).to_json()
     
-    db.session.commit()
-    return Result.success(data={
-        'id': user.id,
-        'nickname': user.nickname,
-        'avatar': user.avatar,
-        'created_at': user.created_at.isoformat()
-    }).to_json()
+    except Exception as e:
+        db.session.rollback()
+        print(f"更新用户资料错误: {str(e)}")
+        return Result.error(message="更新用户资料失败，请稍后重试").to_json()
 
 @bp.route('/avatar', methods=['POST'])
 @jwt_required()
@@ -65,22 +71,28 @@ def upload_avatar():
     if not file.filename.lower().endswith(tuple(allowed_extensions)):
         return Result.bad_request(message="不支持的文件类型").to_json()
     
-    # 生成安全的文件名
-    filename = secure_filename(file.filename)
-    filename = f"{user_id}_{filename}"  # 添加用户 ID 前缀避免文件名冲突
+    try:
+        # 生成安全的文件名
+        filename = secure_filename(file.filename)
+        filename = f"{user_id}_{filename}"  # 添加用户 ID 前缀避免文件名冲突
+        
+        # 确保上传目录存在
+        upload_dir = os.path.join(current_app.static_folder, 'avatars')
+        os.makedirs(upload_dir, exist_ok=True)
+        
+        # 保存文件
+        file_path = os.path.join(upload_dir, filename)
+        file.save(file_path)
+        
+        # 更新用户头像
+        user.avatar = f"/static/avatars/{filename}"
+        db.session.commit()
+        
+        return Result.success(data={
+            'avatar_url': user.avatar
+        }).to_json()
     
-    # 确保上传目录存在
-    upload_dir = os.path.join(current_app.static_folder, 'avatars')
-    os.makedirs(upload_dir, exist_ok=True)
-    
-    # 保存文件
-    file_path = os.path.join(upload_dir, filename)
-    file.save(file_path)
-    
-    # 更新用户头像
-    user.avatar = f"/static/avatars/{filename}"
-    db.session.commit()
-    
-    return Result.success(data={
-        'avatar_url': user.avatar
-    }).to_json()
+    except Exception as e:
+        db.session.rollback()
+        print(f"上传头像错误: {str(e)}")
+        return Result.error(message="上传头像失败，请稍后重试").to_json()
