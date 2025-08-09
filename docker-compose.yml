@@ -12,11 +12,13 @@ services:
     environment:
       - FLASK_ENV=production
       - PYTHONPATH=/app
+      - DATABASE_URL=mysql+pymysql://app_user:user123456@mysql:3306/chat_db
     volumes:
       - ./chroma_db:/app/chroma_db
       - ./app/static:/app/app/static
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - app-network
@@ -45,12 +47,16 @@ services:
       MYSQL_USER: app_user
       MYSQL_PASSWORD: user123456
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     restart: unless-stopped
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
 
 networks:
   app-network:

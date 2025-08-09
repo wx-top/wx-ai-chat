@@ -3,17 +3,17 @@ import { useUserStore } from '../store/user.js'
 
 // 获取用户信息
 export const getProfile = () => {
-  return http.get('/api/user/profile')
+  return http.get('/user/profile')
 }
 
 // 更新用户信息
 export const updateProfile = (data) => {
-  return http.put('/api/user/profile', data)
+  return http.put('/user/profile', data)
 }
 
 // 上传头像
 export const uploadAvatar = (filePath) => {
-  return http.upload('/api/user/avatar', filePath, {
+  return http.upload('/user/avatar', filePath, {
     header: {
       'Authorization': `Bearer ${useUserStore().getAccessToken}`
     }

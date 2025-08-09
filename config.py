@@ -6,13 +6,13 @@ load_dotenv()
 
 class Config:
     SECRET_KEY = os.getenv('SECRET_KEY', 'dev')
-    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'mysql://user:password@localhost/chat_db')
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     # OpenAI配置
     OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
     OPENAI_API_URL = os.getenv('OPENAI_API_URL')
     MODEL_PROVIDER = os.getenv('MODEL_PROVIDER', 'openai')
-    MODULE_PROMPT = os.getenv('MODULE_PROMPT', "你是一个全能的智能助手小七")
+    MODULE_PROMPT = os.getenv('MODULE_PROMPT')
     # LangSmith配置
     LANGSMITH_API_KEY = os.getenv('LANGSMITH_API_KEY', '')
     LANGSMITH_TRACING = os.getenv('LANGSMITH_TRACING', 'true')

@@ -4,7 +4,7 @@ import {http} from '../utils/http.js'
 export const getModels = async () => {
   try {
     console.log('发送模型列表请求')
-    const response = await http.get('/api/model/models')
+    const response = await http.get('/model/models')
     console.log('模型列表响应:', response)
     if (Array.isArray(response)) {
       return response
@@ -18,10 +18,10 @@ export const getModels = async () => {
 
 // 创建模型
 export const createModel = (data) => {
-  return http.post('/api/model/models', data)
+  return http.post('/model/models', data)
 }
 
 // 更新模型
 export const updateModel = (modelId, data) => {
-  return http.put(`/api/model/models/${modelId}`, data)
+  return http.put(`/model/models/${modelId}`, data)
 } 

@@ -32,11 +32,18 @@ def create_app(config_class=Config):
         # 解析数据库连接信息
         db_name = db_url.split('/')[-1]
         
+        # 解析连接字符串 mysql+pymysql://user:password@host:port/database
+        url_parts = db_url.replace('mysql+pymysql://', '').split('@')
+        user_pass = url_parts[0].split(':')
+        host_port_db = url_parts[1].split('/')
+        host_port = host_port_db[0].split(':')
+        
         # 创建数据库连接
         conn = pymysql.connect(
-            host=app.config['SQLALCHEMY_DATABASE_URI'].split('@')[1].split('/')[0],
-            user=app.config['SQLALCHEMY_DATABASE_URI'].split('://')[1].split(':')[0],
-            password=app.config['SQLALCHEMY_DATABASE_URI'].split('://')[1].split(':')[1].split('@')[0],
+            host=host_port[0],
+            port=int(host_port[1]) if len(host_port) > 1 else 3306,
+            user=user_pass[0],
+            password=user_pass[1],
             charset='utf8mb4'
         )
         

@@ -4,11 +4,11 @@ from app import db
 class User(db.Model):
     __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
-    openid = db.Column(db.String(64), unique=False, nullable=False)
-    nickname = db.Column(db.String(64), nullable=False)
-    username = db.Column(db.String(64), nullable=False)
-    password = db.Column(db.String(64), nullable=False)
-    avatar = db.Column(db.String(256), nullable=False)
+    openid = db.Column(db.String(64), unique=False, nullable=True)
+    nickname = db.Column(db.String(64), nullable=True)
+    username = db.Column(db.String(64), nullable=True)
+    password = db.Column(db.String(64), nullable=True)
+    avatar = db.Column(db.String(256), nullable=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
 class Chat(db.Model):

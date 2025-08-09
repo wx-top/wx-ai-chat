@@ -3,17 +3,17 @@ import { useUserStore } from '../store/user.js'
 
 // 获取聊天列表
 export const getChats = () => {
-  return http.get('/api/chat/chats')
+  return http.get('/chat/chats')
 }
 
 // 创建聊天
 export const createChat = (data) => {
-  return http.post('/api/chat/chats', data)
+  return http.post('/chat/chats', data)
 }
 
 // 获取聊天消息
 export const getMessages = (chatId) => {
-  return http.get(`/api/chat/chats/${chatId}/messages`)
+  return http.get(`/chat/chats/${chatId}/messages`)
 }
 
 // 发送消息
@@ -22,7 +22,7 @@ export const sendMessage = async (chatId, content, modelId, onChunkReceived, rep
     const userStore = useUserStore()
     const token = userStore.getAccessToken
 
-    const response = await http.post(`/api/chat/chats/${chatId}/messages`, {
+    const response = await http.post(`/chat/chats/${chatId}/messages`, {
       content,
       model_id: modelId,
       repository_id: repositoryId
@@ -45,7 +45,7 @@ export const sendMessageStream = async (chatId, content, modelId, onChunkReceive
     const userStore = useUserStore()
     const token = userStore.getAccessToken
 
-    const response = await http.post(`/api/chat/chats/${chatId}/messages/stream`, {
+    const response = await http.post(`/chat/chats/${chatId}/messages/stream`, {
       content,
       model_id: modelId,
       repository_id: repositoryId
@@ -76,5 +76,5 @@ export const sendMessageStream = async (chatId, content, modelId, onChunkReceive
 
 // 删除聊天
 export const deleteChat = (chatId) => {
-  return http.delete(`/api/chat/chats/${chatId}`)
+  return http.delete(`/chat/chats/${chatId}`)
 } 

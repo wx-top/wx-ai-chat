@@ -101,7 +101,7 @@ class ChatService:
         print(docs_content)
         
         system_message_content = (
-            f"{current_app.config['LANGSMITH_API_KEY']}"
+            f"{current_app.config['MODULE_PROMPT']}"
             "\n\n"
             f"{docs_content}"
         )
@@ -120,7 +120,7 @@ class ChatService:
     def _simple_generate(self, state: MessagesState):
         """直接生成回答，不使用检索"""
         system_message_content = (
-            f"{current_app.config['LANGSMITH_API_KEY']}"
+            f"{current_app.config['MODULE_PROMPT']}"
         )
         conversation_messages = [
             message
@@ -309,23 +309,6 @@ class ChatService:
             def error_generator():
                 yield [{"type": "error", "content": f"聊天服务错误: {str(e)}"}]
             return error_generator()
-
-
-# if __name__ == '__main__':
-    #  初始化环境变量    # os.environ["OPENAI_API_KEY"] = "sk-f0d69c29581c40c8a38d0e9a726be2f8"
-    # os.environ["LANGSMITH_TRACING"] = "true"
-    # os.environ["LANGSMITH_API_KEY"] = "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"
-    # # 创建用户专属的聊天服务实例
-    # cs = ChatService( "deepseek-chat", repository_id=1)
-    # print(cs.get_chat_history())
-    # # 加载用户文档
-    # print(cs.list_documents())
-    # # cs.load_documents(r"C:\Users\wenxin\Desktop\公司福利.txt")
-    # # cs.delete_documents("15897ff1-a73f-4b16-8613-f4a7e9eab411")
-    # print(cs.list_documents())
-    # cs.chat("公司有餐补吗？")
-    # cs.chat("我刚刚问的什么？")
-    # print(cs.get_chat_history())
 
 
 

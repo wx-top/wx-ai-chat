@@ -5,4 +5,15 @@ export default defineConfig({
   plugins: [
     uni(),
   ],
+  server: {
+    host: "0.0.0.0",
+    port: 80,
+    // proxy: {
+    //   '/api': {
+    //     target: 'http://localhost:5000',
+    //     changeOrigin: true,
+    //     secure: false
+    //   }
+    // }
+  }
 })
