@@ -1,0 +1,39 @@
+# Web框架
+Flask==3.0.3
+Flask-SQLAlchemy==3.1.1
+Flask-JWT-Extended==4.6.0
+Flask-CORS==4.0.1
+
+# 数据库
+PyMySQL==1.1.1
+
+# AI/机器学习
+langchain==0.3.7
+langchain-core==0.3.15
+langchain-community==0.3.7
+langchain-chroma==0.1.4
+langchain-ollama==0.2.0
+langchain-text-splitters==0.3.2
+langgraph==0.2.45
+
+# 向量数据库
+chromadb==0.5.20
+
+# 文档处理
+PyPDF2==3.0.1
+docx2txt==0.8
+
+# 其他核心依赖
+bcrypt==4.2.0
+
+# HTTP请求
+requests==2.32.3
+
+# 其他工具
+Werkzeug==3.0.4
+
+# 环境变量管理
+python-dotenv==1.0.1
+
+# WSGI服务器
+gunicorn==21.2.0
