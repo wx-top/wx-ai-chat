@@ -20,6 +20,21 @@ htmlcov/
 *.db
 *.sqlite3
 
+# Web Frontend
+web/node_modules/
+web/dist/
+web/unpackage/
+web/.env
+web/.env.local
+web/.env.development.local
+web/.env.test.local
+web/.env.production.local
+web/npm-debug.log*
+web/yarn-debug.log*
+web/yarn-error.log*
+web/pnpm-debug.log*
+web/lerna-debug.log*
+
 # UniApp
 unpackage/
 node_modules/
@@ -63,4 +78,4 @@ Thumbs.db
 
 # 系统文件
 .DS_Store
-Thumbs.db 
+Thumbs.db
