@@ -22,16 +22,14 @@ RUN apt-get update && apt-get install -y \
 
 # 复制requirements.txt并安装Python依赖
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+
+RUN pip install --no-cache-dir -r requirements.txt -i https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
 
 # 复制应用代码
 COPY . .
 
 # 创建必要的目录
 RUN mkdir -p chroma_db app/static/avatars app/static/repository_files
-
-# 设置启动脚本权限
-RUN chmod +x start.sh
 
 # 暴露端口
 EXPOSE 5000
@@ -40,5 +38,5 @@ EXPOSE 5000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:5000/health || exit 1
 
-# 启动命令
-CMD ["./start.sh"]
+# 启动命令：初始化数据库并启动gunicorn
+CMD ["sh", "-c", "echo '正在初始化数据库...' && python init_db.py && echo '数据库初始化成功' && echo '正在启动应用服务...' && exec gunicorn --bind 0.0.0.0:5000 --workers 4 --timeout 120 run:app"]

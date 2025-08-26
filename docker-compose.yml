@@ -9,10 +9,11 @@ services:
     container_name: wx-ai-chat-backend
     ports:
       - "5000:5000"
+    env_file:
+      - .env
     environment:
       - FLASK_ENV=production
       - PYTHONPATH=/app
-      - DATABASE_URL=mysql+pymysql://app_user:user123456@mysql:3306/chat_db
     volumes:
       - ./chroma_db:/app/chroma_db
       - ./app/static:/app/app/static
@@ -30,7 +31,7 @@ services:
       dockerfile: Dockerfile
     container_name: wx-ai-chat-frontend
     ports:
-      - "80:80"
+      - "81:80"
     depends_on:
       - backend
     restart: unless-stopped

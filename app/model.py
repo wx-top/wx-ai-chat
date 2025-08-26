@@ -10,8 +10,6 @@ bp = Blueprint('model', __name__)
 @jwt_required()
 def get_models():
     try:
-        user_id = get_jwt_identity()  # 获取字符串类型的用户 ID
-        user = User.query.get_or_404(int(user_id))  # 将字符串转换为整数后查询用户
         models = Model.query.filter_by(is_active=True).all()
         return Result.success(data=[{
             'id': model.id,
@@ -25,8 +23,6 @@ def get_models():
 @jwt_required()
 def create_model():
     try:
-        user_id = get_jwt_identity()  # 获取字符串类型的用户 ID
-        user = User.query.get_or_404(int(user_id))  # 将字符串转换为整数后查询用户
         data = request.json
         if not data or 'name' not in data:
             return Result.bad_request(message="缺少必要参数").to_json()
@@ -51,8 +47,8 @@ def create_model():
 @jwt_required()
 def update_model(model_id):
     try:
-        user_id = get_jwt_identity()  # 获取字符串类型的用户 ID
-        user = User.query.get_or_404(int(user_id))  # 将字符串转换为整数后查询用户
+        # user_id = get_jwt_identity()  # 获取字符串类型的用户 ID
+        # user = User.query.get_or_404(int(user_id))  # 将字符串转换为整数后查询用户
         model = Model.query.get_or_404(model_id)
         data = request.json
         

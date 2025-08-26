@@ -9,10 +9,10 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 
 # 安装pnpm
-RUN npm install -g pnpm
+RUN npm install -g pnpm --registry=https://registry.npmmirror.com
 
 # 安装依赖
-RUN pnpm install
+RUN pnpm install --registry=https://registry.npmmirror.com
 
 # 复制源代码
 COPY . .
