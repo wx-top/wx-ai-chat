@@ -49,7 +49,7 @@
 		<view class="input-fixed">
 			<view class="input-wrapper">
 				<textarea class="message-input" v-model="inputMessage" placeholder="请输入消息..." :disabled="loading"
-					auto-height @keydown.enter.prevent="sendMessage" />
+				auto-height @keydown.enter.prevent="sendMessage" @focus="handleKeyboardShow" @blur="handleKeyboardHide" />
 				<button class="send-btn" :disabled="!inputMessage.trim() || loading" @click="sendMessage">
 					<uni-icons type="paperplane-filled" size="18" color="#ffffff"></uni-icons>
 				</button>
@@ -60,26 +60,29 @@
 
 <script setup>
 	import {
-		ref,
-		nextTick,
-		watch,
-		onMounted,
-	} from 'vue'
-	import {
-		useChatStore
-	} from '@/store/chat.js'
-	import {
-		useModelStore
-	} from '@/store/model.js'
-	import {
-		storeToRefs
-	} from 'pinia'
-	import {
-		onShow
-	} from "@dcloudio/uni-app"
-	import {
-		getRepositories
-	} from '@/api/repository'
+	ref,
+	nextTick,
+	watch,
+	onMounted,
+} from 'vue'
+import {
+	useChatStore
+} from '@/store/chat.js'
+import {
+	useModelStore
+} from '@/store/model.js'
+import {
+	storeToRefs
+} from 'pinia'
+import {
+	onShow
+} from "@dcloudio/uni-app"
+import {
+	getRepositories
+} from '@/api/repository'
+import {
+	debounce
+} from '@/utils/debounce.js'
 
 	const chatStore = useChatStore()
 	const modelStore = useModelStore()
@@ -175,10 +178,32 @@
 		scrollTop.value = Math.random() * 10000
 	}
 
+	// 防抖滚动到底部
+	const debouncedScrollToBottom = debounce(scrollToBottom, 100)
+
+	// 键盘弹出处理
+	const handleKeyboardShow = () => {
+		setTimeout(() => {
+			debouncedScrollToBottom()
+		}, 600) // 增加延迟确保键盘完全弹出
+	}
+
+	// 键盘收起处理
+	const handleKeyboardHide = () => {
+		setTimeout(() => {
+			debouncedScrollToBottom()
+		}, 100)
+	}
+
 	// 监听消息变化，自动滚动到底部
 	watch(() => currentMessages.value.length, async () => {
 		await scrollToBottom()
 	})
+
+	// 深度监听消息内容变化
+	watch(() => currentMessages.value, async () => {
+		await scrollToBottom()
+	}, { deep: true })
 
 	// 页面加载时获取聊天列表和模型列表
 	onMounted(async () => {
@@ -228,7 +253,7 @@
 	}
 </script>
 
-<style>
+<style scoped>
 	/* 页面容器 - 考虑tabbar高度 */
 	.page-container {
 		position: relative;
@@ -273,10 +298,14 @@
 	.input-fixed {
 		flex-shrink: 0;
 		background-color: white;
-		border-top: 2rpx solid #e0e0e0;
-		padding: 16rpx 24rpx;
+		border-top: 2rpx solid #dcd6d6;
+		/* padding: 12rpx 12rpx; */
+		padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
 		box-shadow: 0 -2rpx 8rpx rgba(0, 0, 0, 0.1);
-		z-index: 0;
+		z-index: 100;
+		position: relative;
+		min-height: 220rpx;
+		display: block;
 	}
 
 	.input-wrapper {
@@ -287,6 +316,9 @@
 		border-radius: 20rpx;
 		padding: 16rpx;
 		box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.08);
+		min-height: 48rpx;
+		width: 100%;
+		box-sizing: border-box;
 	}
 
 	/* 模型选择器 */
@@ -342,8 +374,8 @@
 		display: flex;
 		flex-direction: column;
 		gap: 24rpx;
-		padding: 30rpx 0;
-		min-height: calc(100% - 60rpx);
+		padding: 30rpx 0 60rpx 0;
+		min-height: 100%;
 	}
 
 	.message {
@@ -471,6 +503,10 @@
 		padding: 12rpx;
 	}
 
+	.input-fixed {
+		padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
+	}
+
 	.message-input {
 		max-height: 100rpx !important;
 		font-size: 26rpx !important;
@@ -480,6 +516,19 @@
 	.send-btn {
 		height: 56rpx !important;
 		width: 56rpx !important;
+	}
+
+	/* PC端适配 - 减少输入框区域高度 */
+	@media (min-width: 768px) {
+		.input-fixed {
+			min-height: 120rpx !important;
+			padding: 16rpx 24rpx !important;
+		}
+		
+		.input-wrapper {
+			margin: 0 !important;
+			padding: 12rpx 16rpx !important;
+		}
 	}
 	/* #endif */
 

@@ -15,9 +15,7 @@ class Config:
     MODULE_PROMPT = os.getenv('MODULE_PROMPT')
     EMBEDDINGS_URL = os.getenv('EMBEDDINGS_URL')
     EMBEDDINGS_MODEL = os.getenv('EMBEDDINGS_MODEL')
-    # LangSmith配置
-    LANGSMITH_API_KEY = os.getenv('LANGSMITH_API_KEY', '')
-    LANGSMITH_TRACING = os.getenv('LANGSMITH_TRACING', 'true')
+
     # Wechat配置
     WECHAT_APPID = os.getenv('WECHAT_APPID')
     WECHAT_SECRET = os.getenv('WECHAT_SECRET')

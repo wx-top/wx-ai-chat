@@ -60,6 +60,7 @@
     "clipboard": "^2.0.11",
     "dayjs": "^1.11.13",
     "hookable": "^5.5.3",
+    "lodash-es": "^4.17.21",
     "perfect-debounce": "^1.0.0",
     "pinia": "^3.0.3",
     "uview-plus": "^3.4.77",

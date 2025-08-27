@@ -1,6 +1,5 @@
 from langchain.chat_models import init_chat_model
 import os
-from langchain_core.tools import tool
 from langchain_ollama import OllamaEmbeddings
 from langchain_chroma import Chroma
 from langchain_community.document_loaders import TextLoader, PyPDFLoader, Docx2txtLoader
@@ -8,7 +7,6 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langgraph.graph import MessagesState, StateGraph
 from langgraph.graph import END
 from langgraph.checkpoint.memory import MemorySaver
-from langgraph.prebuilt import ToolNode, tools_condition
 from langchain.schema import SystemMessage
 from typing import List, Iterator
 import uuid
@@ -25,8 +23,6 @@ class ChatService:
     def __init__(self, model_name: str = None, repository_id: int = None):
         # 从Flask配置获取API密钥
         os.environ["OPENAI_API_KEY"] = current_app.config['OPENAI_API_KEY']
-        os.environ["LANGSMITH_TRACING"] = current_app.config['LANGSMITH_TRACING']
-        os.environ["LANGSMITH_API_KEY"] = current_app.config['LANGSMITH_API_KEY']
         baseUrl = current_app.config['OPENAI_API_URL']
         print(f"请求URL: {baseUrl}")
         
@@ -34,9 +30,15 @@ class ChatService:
         global embeddings
         if embeddings is None:
             embeddings_url = current_app.config.get('EMBEDDINGS_URL')
-            embeddings_model = current_app.config.get('EMBEDDINGS_MODEL', 'bge-m3')
-            print(f"初始化embeddings模型: {embeddings_model}, URL: {embeddings_url}")
-            embeddings = OllamaEmbeddings(model=embeddings_model, base_url=embeddings_url)
+            # embeddings_model = current_app.config.get('EMBEDDINGS_MODEL', 'bge-m3')
+            # print(f"初始化embeddings模型: {embeddings_model}, URL: {embeddings_url}")
+            try:
+                embeddings = OllamaEmbeddings(model="bge-m3")
+                print("Embeddings模型初始化成功")
+            except Exception as e:
+                print(f"Embeddings模型初始化失败: {str(e)}")
+                print(f"请确保Ollama服务正在运行，并且可以通过 {embeddings_url} 访问")
+                raise e
         
         # 初始化聊天模型
         self.model = init_chat_model(base_url=baseUrl,
@@ -50,65 +52,55 @@ class ChatService:
         # 只有在有 repository_id 时才初始化向量数据库
         if repository_id is not None:
             print('加载向量数据库...')
-            self.vector_store = Chroma(
-                collection_name=f"user_{repository_id}_benefits",
-                embedding_function=embeddings,
-                persist_directory=PERSIST_DIRECTORY
-            )
-            print(self.list_documents())
-            # 创建工具
-            self.retrieve_tool = self._create_retrieve_tool()
-            self.tools = ToolNode([self.retrieve_tool])
+            try:
+                self.vector_store = Chroma(
+                    collection_name=f"user_{repository_id}_benefits",
+                    embedding_function=embeddings,
+                    persist_directory=PERSIST_DIRECTORY
+                )
+                print("向量数据库初始化成功")
+                print(self.list_documents())
+            except Exception as e:
+                print(f"向量数据库初始化失败: {str(e)}")
+                print(f"请检查Chroma数据库配置和embeddings模型是否正常")
+                raise e
 
         # 添加聊天记录
         # self.graph = self.graph_builder.compile(checkpointer=memory)
         # self.graph = self.graph_builder.compile()
 
-    def _create_retrieve_tool(self):
-        @tool(response_format="content_and_artifact")
-        def retrieve(query: str):
-            """Retrieve information related to a query."""
-            # 检查向量数据库中的文档数量
-            result = self.vector_store.get()
-            print(f"向量数据库中的文档数量: {len(result['ids'])}")
-            
-            retrieved_docs = self.vector_store.similarity_search(query, k=2)
-            print(f"检索到的文档数量: {len(retrieved_docs)}")
-            
-            # 打印检索到的文档内容
-            for i, doc in enumerate(retrieved_docs):
-                print(f"\n检索到的文档 {i+1}:")
-                print(f"元数据: {doc.metadata}")
-                print(f"内容: {doc.page_content}")
-            
-            serialized = "\n\n".join(
-                f"Source: {doc.metadata}\n" f"Content: {doc.page_content}"
-                for doc in retrieved_docs
-            )
-            return serialized, retrieved_docs
-        return retrieve
 
-    def _query_or_respond(self, state: MessagesState):
-        """Generate tool call for retrieval or respond."""
-        llm_with_tools = self.model.bind_tools([self.retrieve_tool])
-        response = llm_with_tools.invoke(state["messages"])
-        return {"messages": [response]}
 
     def _generate(self, state: MessagesState):
-        """Generate answer."""
-        # Get generated ToolMessages
-        recent_tool_messages = []
-        for message in reversed(state["messages"]):
-            if message.type == "tool":
-                recent_tool_messages.append(message)
-            else:
-                break
-        tool_messages = recent_tool_messages[::-1]
-
-        # Format into prompt
-        docs_content = "\n\n".join(doc.content for doc in tool_messages)
-        print("\n提供给模型的上下文信息:")
-        print(docs_content)
+        """Generate answer with retrieval."""
+        # 获取用户最新的消息作为查询
+        user_messages = [msg for msg in state["messages"] if msg.type == "human"]
+        if user_messages:
+            latest_query = user_messages[-1].content
+            
+            # 直接进行向量检索
+            try:
+                retrieved_docs = self.vector_store.similarity_search(latest_query, k=2)
+                print(f"检索到的文档数量: {len(retrieved_docs)}")
+                
+                # 打印检索到的文档内容
+                for i, doc in enumerate(retrieved_docs):
+                    print(f"\n检索到的文档 {i+1}:")
+                    print(f"元数据: {doc.metadata}")
+                    print(f"内容: {doc.page_content}")
+                
+                # 格式化检索到的文档
+                docs_content = "\n\n".join(
+                    f"来源: {doc.metadata}\n内容: {doc.page_content}"
+                    for doc in retrieved_docs
+                )
+                print("\n提供给模型的上下文信息:")
+                print(docs_content)
+            except Exception as e:
+                print(f"检索过程中出错: {str(e)}")
+                docs_content = ""
+        else:
+            docs_content = ""
         
         system_message_content = (
             f"{current_app.config['MODULE_PROMPT']}"
@@ -280,16 +272,9 @@ class ChatService:
         try:
             graph_builder = StateGraph(MessagesState)
             if self.repository_id:
-                graph_builder.add_node(self._query_or_respond)
-                graph_builder.add_node(self.tools)
+                # 使用简化的生成方法，包含检索功能但不使用工具调用
                 graph_builder.add_node(self._generate)
-                graph_builder.set_entry_point("_query_or_respond")
-                graph_builder.add_conditional_edges(
-                    "_query_or_respond",
-                    tools_condition,
-                    {END: END, "tools": "tools"},
-                )
-                graph_builder.add_edge("tools", "_generate")
+                graph_builder.set_entry_point("_generate")
                 graph_builder.add_edge("_generate", END)
             else:
                 graph_builder.add_node(self._simple_generate)
