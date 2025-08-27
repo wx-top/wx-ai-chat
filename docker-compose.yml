@@ -32,6 +32,8 @@ services:
     container_name: wx-ai-chat-frontend
     ports:
       - "81:80"
+    env_file:
+      - ./web/.env
     depends_on:
       - backend
     restart: unless-stopped

@@ -18,7 +18,7 @@ def create_app(config_class=Config):
     
     # 配置CORS - 允许所有域名访问
     CORS(app, resources={
-        r"/api/*": {
+        r"*": {
             "origins": "*",  # 允许所有域名访问
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"]
@@ -55,19 +55,19 @@ def create_app(config_class=Config):
     
     # 注册蓝图
     from app.auth import bp as auth_bp
-    app.register_blueprint(auth_bp, url_prefix='/api/auth')
+    app.register_blueprint(auth_bp, url_prefix='/auth')
     
     from app.chat import bp as chat_bp
-    app.register_blueprint(chat_bp, url_prefix='/api/chat')
+    app.register_blueprint(chat_bp, url_prefix='/chat')
     
     from app.model import bp as model_bp
-    app.register_blueprint(model_bp, url_prefix='/api/model')
+    app.register_blueprint(model_bp, url_prefix='/model')
     
     from app.user import bp as user_bp
-    app.register_blueprint(user_bp, url_prefix='/api/user')
+    app.register_blueprint(user_bp, url_prefix='/user')
     
     from app.repository import bp as repository_bp
-    app.register_blueprint(repository_bp, url_prefix='/api/repository')
+    app.register_blueprint(repository_bp, url_prefix='/repository')
     
     # 在应用上下文中导入 User 模型
     with app.app_context():
