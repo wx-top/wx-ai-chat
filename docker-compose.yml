@@ -14,6 +14,7 @@ services:
       - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+      - ./chat_db.sql:/docker-entrypoint-initdb.d/init.sql
     restart: unless-stopped
     networks:
       - app-network
@@ -55,8 +56,6 @@ services:
     container_name: wx-ai-chat-frontend
     ports:
       - "81:80"
-    env_file:
-      - ./web/.env
     depends_on:
       - backend
     restart: unless-stopped

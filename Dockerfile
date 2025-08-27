@@ -38,5 +38,5 @@ EXPOSE 5000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:5000/health || exit 1
 
-# 启动命令：初始化数据库并启动gunicorn
-CMD ["sh", "-c", "echo '正在初始化数据库...' && python init_db.py && echo '数据库初始化成功' && echo '正在启动应用服务...' && exec gunicorn --bind 0.0.0.0:5000 --workers 4 --timeout 120 run:app"]
+# 启动命令：直接启动gunicorn
+CMD ["sh", "-c", "echo '正在启动应用服务...' && exec gunicorn --bind 0.0.0.0:5000 --workers 4 --timeout 120 run:app"]

@@ -25,33 +25,7 @@ def create_app(config_class=Config):
         }
     })
     
-    # 创建数据库（如果不存在）
-    with app.app_context():
-        # 从配置中获取数据库连接信息
-        db_url = app.config['SQLALCHEMY_DATABASE_URI']
-        # 解析数据库连接信息
-        db_name = db_url.split('/')[-1]
-        
-        # 解析连接字符串 mysql+pymysql://user:password@host:port/database
-        url_parts = db_url.replace('mysql+pymysql://', '').split('@')
-        user_pass = url_parts[0].split(':')
-        host_port_db = url_parts[1].split('/')
-        host_port = host_port_db[0].split(':')
-        
-        # 创建数据库连接
-        conn = pymysql.connect(
-            host=host_port[0],
-            port=int(host_port[1]) if len(host_port) > 1 else 3306,
-            user=user_pass[0],
-            password=user_pass[1],
-            charset='utf8mb4'
-        )
-        
-        # 创建数据库
-        with conn.cursor() as cursor:
-            cursor.execute(f"CREATE DATABASE IF NOT EXISTS {db_name}")
-        
-        conn.close()
+    # 数据库和表结构由MySQL容器通过init.sql自动创建
     
     # 注册蓝图
     from app.auth import bp as auth_bp
