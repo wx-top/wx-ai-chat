@@ -33,16 +33,19 @@
 
 		<!-- 聊天消息区域 -->
 		<view class="chat-content">
-			<scroll-view class="message-scroll" scroll-y="true" :scroll-top="scrollTop" scroll-with-animation>
-				<view class="message-list">
-					<view v-for="(message, index) in currentMessages" :key="index"
-						:class="['message', message.role === 'user' ? 'message-user' : 'message-ai']">
-						<view class="message-content">
-							<text>{{ message.content || '正在思考...' }}</text>
-						</view>
+			<scroll-view class="message-scroll" scroll-y="true" :scroll-top="scrollTop" :scroll-into-view="scrollIntoView" scroll-with-animation>
+			<view class="message-list">
+				<view v-for="(message, index) in currentMessages" :key="index"
+					:id="index === currentMessages.length - 1 ? 'bottom-message' : ''"
+					:class="['message', message.role === 'user' ? 'message-user' : 'message-ai']">
+					<view class="message-content">
+						<text>{{ message.content || '正在思考...' }}</text>
 					</view>
 				</view>
-			</scroll-view>
+				<!-- 底部锚点 -->
+				<view id="scroll-bottom" style="height: 1px;"></view>
+			</view>
+		</scroll-view>
 		</view>
 
 		<!-- 固定底部输入区域 -->
@@ -88,6 +91,7 @@ import {
 	const modelStore = useModelStore()
 	const inputMessage = ref('')
 	const scrollTop = ref(0)
+	const scrollIntoView = ref('')
 	const repositories = ref([])
 
 	const currentModel = ref(null)
@@ -175,11 +179,16 @@ import {
 	// 滚动到底部
 	const scrollToBottom = async () => {
 		await nextTick()
-		scrollTop.value = Math.random() * 10000
+		// 使用scroll-into-view滚动到底部锚点
+		scrollIntoView.value = 'scroll-bottom'
+		// 清空scroll-into-view以便下次使用
+		setTimeout(() => {
+			scrollIntoView.value = ''
+		}, 100)
 	}
 
 	// 防抖滚动到底部
-	const debouncedScrollToBottom = debounce(scrollToBottom, 100)
+	const debouncedScrollToBottom = debounce(scrollToBottom, 300)
 
 	// 键盘弹出处理
 	const handleKeyboardShow = () => {
@@ -197,13 +206,30 @@ import {
 
 	// 监听消息变化，自动滚动到底部
 	watch(() => currentMessages.value.length, async () => {
-		await scrollToBottom()
+		await nextTick()
+		debouncedScrollToBottom()
 	})
 
-	// 深度监听消息内容变化
+	// 监听消息内容变化（仅在消息数量不变时触发，避免重复滚动）
+	let lastMessageCount = 0
 	watch(() => currentMessages.value, async () => {
-		await scrollToBottom()
+		if (currentMessages.value.length === lastMessageCount) {
+			// 消息数量没变，说明是内容更新（如AI正在输出）
+			await nextTick()
+			debouncedScrollToBottom()
+		}
+		lastMessageCount = currentMessages.value.length
 	}, { deep: true })
+
+	// 监听流式响应状态，确保接收完消息后滚动到底部
+	watch(() => chatStore.streaming, async (newVal, oldVal) => {
+		// 当流式响应结束时（从true变为false），确保滚动到底部
+		if (oldVal === true && newVal === false) {
+			await nextTick()
+			// 使用直接滚动而不是防抖，确保消息接收完成后立即滚动
+			scrollToBottom()
+		}
+	})
 
 	// 页面加载时获取聊天列表和模型列表
 	onMounted(async () => {
@@ -302,7 +328,7 @@ import {
 		/* padding: 12rpx 12rpx; */
 		padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
 		box-shadow: 0 -2rpx 8rpx rgba(0, 0, 0, 0.1);
-		z-index: 100;
+		/* z-index: 100; */
 		position: relative;
 		min-height: 220rpx;
 		display: block;

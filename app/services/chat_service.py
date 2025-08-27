@@ -30,10 +30,10 @@ class ChatService:
         global embeddings
         if embeddings is None:
             embeddings_url = current_app.config.get('EMBEDDINGS_URL')
-            # embeddings_model = current_app.config.get('EMBEDDINGS_MODEL', 'bge-m3')
-            # print(f"初始化embeddings模型: {embeddings_model}, URL: {embeddings_url}")
+            embeddings_model = current_app.config.get('EMBEDDINGS_MODEL', 'bge-m3')
+            print(f"初始化embeddings模型: {embeddings_model}, URL: {embeddings_url}")
             try:
-                embeddings = OllamaEmbeddings(model="bge-m3")
+                embeddings = OllamaEmbeddings(model=embeddings_model, base_url=embeddings_url)
                 print("Embeddings模型初始化成功")
             except Exception as e:
                 print(f"Embeddings模型初始化失败: {str(e)}")
