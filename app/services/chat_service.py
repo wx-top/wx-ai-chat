@@ -14,8 +14,9 @@ from typing import List, Iterator
 import uuid
 from flask import current_app
 
-
-embeddings = OllamaEmbeddings(model="bge-m3")
+# 从Flask配置中获取embeddings配置，支持远程连接
+# 默认使用环境变量中的EMBEDDINGS_URL和EMBEDDINGS_MODEL
+embeddings = None  # 将在ChatService初始化时创建
 PERSIST_DIRECTORY = "chroma_db"
 memory = MemorySaver()
 
@@ -28,7 +29,16 @@ class ChatService:
         os.environ["LANGSMITH_API_KEY"] = current_app.config['LANGSMITH_API_KEY']
         baseUrl = current_app.config['OPENAI_API_URL']
         print(f"请求URL: {baseUrl}")
-        # 初始化模型
+        
+        # 初始化embeddings模型
+        global embeddings
+        if embeddings is None:
+            embeddings_url = current_app.config.get('EMBEDDINGS_URL')
+            embeddings_model = current_app.config.get('EMBEDDINGS_MODEL', 'bge-m3')
+            print(f"初始化embeddings模型: {embeddings_model}, URL: {embeddings_url}")
+            embeddings = OllamaEmbeddings(model=embeddings_model, base_url=embeddings_url)
+        
+        # 初始化聊天模型
         self.model = init_chat_model(base_url=baseUrl,
                                 model=model_name,
                                 temperature=0.95,
