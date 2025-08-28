@@ -14,17 +14,17 @@
 					valueName="id" @confirm="modelPickerConfirm"></up-picker>
 			</view>
 			<view class="header-right">
-				<view class="repository-selector">
-					<view class="repository-btn" @click="repoPickerShow = true">
-						<uni-icons type="folder-add" size="24" color="#007AFF"></uni-icons>
-						<text v-if="currentRepository" class="repository-name">{{ currentRepository.name }}</text>
-					</view>
-					<view v-if="currentRepository" class="repository-cancel" @click="cancelRepositorySelect">
-						<uni-icons type="closeempty" size="16" color="#999"></uni-icons>
-					</view>
-					<up-picker v-model:show="repoPickerShow" :columns="[repositories]" keyName="name"
-						valueName="id" @confirm="repoPickerConfirm"></up-picker>
-				</view>
+<!--				<view class="repository-selector">-->
+<!--					<view class="repository-btn" @click="repoPickerShow = true">-->
+<!--						<uni-icons type="folder-add" size="24" color="#007AFF"></uni-icons>-->
+<!--						<text v-if="currentRepository" class="repository-name">{{ currentRepository.name }}</text>-->
+<!--					</view>-->
+<!--					<view v-if="currentRepository" class="repository-cancel" @click="cancelRepositorySelect">-->
+<!--						<uni-icons type="closeempty" size="16" color="#999"></uni-icons>-->
+<!--					</view>-->
+<!--					<up-picker v-model:show="repoPickerShow" :columns="[repositories]" keyName="name"-->
+<!--						valueName="id" @confirm="repoPickerConfirm"></up-picker>-->
+<!--				</view>-->
 				<view class="new-chat-btn" @click="createNewChat">
 					<text>新对话</text>
 				</view>
