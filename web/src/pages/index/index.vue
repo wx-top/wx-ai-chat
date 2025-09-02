@@ -38,6 +38,15 @@
 					<view v-for="(message, index) in currentMessages" :key="index"
 						:id="index === currentMessages.length - 1 ? 'bottom-message' : ''"
 						:class="['message-item', message.role === 'user' ? 'user-message' : 'ai-message']">
+						<!-- 头像 -->
+						<view class="avatar">
+							<image 
+								:src="message.role === 'user' ? '/static/user.jpg' : '/static/bot.jpg'"
+								class="avatar-image"
+								mode="aspectFill"
+							/>
+						</view>
+						<!-- 消息气泡 -->
 						<view class="message-bubble">
 							<text>{{ message.content || '正在思考...' }}</text>
 						</view>
@@ -97,7 +106,7 @@ const repositories = ref([])
 
 const currentModel = ref(null)
 const modelPickerShow = ref(false)
-const repoPickerShow = ref(false)
+// const repoPickerShow = ref(false)
 
 // 当前选择的模型
 const {
@@ -108,7 +117,7 @@ const {
 	loading,
 	currentMessages,
 	currentChatId,
-	currentRepository
+	// currentRepository
 } = storeToRefs(chatStore)
 const {
 	isWechat: isWechatEnv
@@ -118,10 +127,26 @@ const modelPickerConfirm = (e) => {
 	console.log("选择", e)
 	selectedModel.value = e.value[0]
 }
+const getChatPageHeight = () => {
+	const deviceType = appStore.deviceType
+	console.log("deviceType", deviceType)
+	switch (deviceType) {
+		case 'wechat':
+			return 'calc(100vh - 100rpx)'
+		case 'mobile':
+			return 'calc(100vh - 205rpx)'
+		case 'tablet':
+			return 'calc(100vh - 100rpx)'
+		case 'desktop':
+			return 'calc(100vh - 100rpx)'
+		default:
+			return 'calc(100vh - 100rpx)'
+	}
 
-const repoPickerConfirm = (e) => {
-	currentRepository.value = e.value[0]
 }
+// const repoPickerConfirm = (e) => {
+// 	currentRepository.value = e.value[0]
+// }
 
 // 创建新对话
 const createNewChat = async () => {
@@ -145,14 +170,6 @@ const createNewChat = async () => {
 		})
 	}
 }
-
-// 跳转到模型选择页面
-const goToModelSelect = () => {
-	uni.navigateTo({
-		url: '/pages/models/models'
-	})
-}
-
 // 发送消息
 const sendMessage = async () => {
 	if (!inputMessage.value.trim() || chatStore.loading) return
@@ -270,33 +287,13 @@ onShow(async () => {
 		await chatStore.fetchMessages(chat.id)
 	} else {
 		// 如果没有模型，跳转到模型选择页
-		goToModelSelect()
+		// goToModelSelect()
 	}
 })
-
-// 获取聊天页面高度
-const getChatPageHeight = () => {
-	const deviceType = appStore.deviceType
-	console.log("deviceType", deviceType)
-	switch (deviceType) {
-		case 'wechat':
-			return 'calc(100vh - 100rpx)'
-		case 'mobile':
-			return 'calc(100vh - 205rpx)'
-		case 'tablet':
-			return 'calc(100vh - 100rpx)'
-		case 'desktop':
-			return 'calc(100vh - 100rpx)'
-		default:
-			return 'calc(100vh - 100rpx)'
-	}
-
-}
-
 // 取消选择知识库
-const cancelRepositorySelect = () => {
-	chatStore.setCurrentRepository(null)
-}
+// const cancelRepositorySelect = () => {
+// 	chatStore.setCurrentRepository(null)
+// }
 </script>
 
 <style scoped>
@@ -306,6 +303,7 @@ const cancelRepositorySelect = () => {
 	flex-direction: column;
 	background-color: #f5f5f5;
 	overflow: hidden;
+	height: 100vh;
 }
 
 /* 顶部区域 */
@@ -390,23 +388,39 @@ const cancelRepositorySelect = () => {
 	flex-direction: column;
 	gap: 24rpx;
 	padding: 30rpx 0 60rpx 0;
-	min-height: 100%;
 }
 
 .message-item {
 	max-width: 85%;
 	display: flex;
-	width: 100%;
+	align-items: flex-start;
+	gap: 16rpx;
 }
 
 .user-message {
 	justify-content: flex-end;
 	align-self: flex-end;
+	flex-direction: row-reverse;
 }
 
 .ai-message {
 	justify-content: flex-start;
 	align-self: flex-start;
+	flex-direction: row;
+}
+
+/* 头像样式 */
+.avatar {
+	flex-shrink: 0;
+	width: 80rpx;
+	height: 80rpx;
+}
+
+.avatar-image {
+	width: 100%;
+	height: 100%;
+	border-radius: 50%;
+	object-fit: cover;
 }
 
 .message-bubble {
@@ -415,6 +429,7 @@ const cancelRepositorySelect = () => {
 	word-break: break-word;
 	line-height: 1.5;
 	font-size: 28rpx;
+	max-width: calc(100% - 96rpx);
 }
 
 .user-message .message-bubble {
@@ -542,7 +557,7 @@ const cancelRepositorySelect = () => {
 
 /* #ifdef MP-WEIXIN */
 .chat-page {
-	height: calc(100vh - var(--window-bottom));
+	height: 100vh;
 }
 /* #endif */
 </style>

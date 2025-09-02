@@ -58,11 +58,11 @@ export function isTablet() {
 export function getDeviceType() {
   if (isTablet()) {
     return 'tablet'
-      } else if (isWechat()) {
+  } else if (isWechat()) {
     return 'wechat'
   } else if (isMobile()) {
     return 'mobile'
-  } else if (isDesktop()) {
+  } else {
     return 'desktop'
   }
 }
